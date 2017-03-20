@@ -12,7 +12,8 @@ OBJS = \
 	   wireManager.o \
 	   circuitTree.o \
 	   circuitGroup.o \
-	   circuitTristate.o
+	   circuitTristate.o \
+	   circuitDelay.o
 
 ###############################################################################
 
