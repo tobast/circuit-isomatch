@@ -15,8 +15,7 @@ CircuitGroup::CircuitGroup(const std::string& name) :
 {}
 
 CircuitGroup::sig_t CircuitGroup::sign(int level) {
-    if(!frozen)
-        throw NotFrozen();
+    failIfNotFrozen();
     if(level < (int)memoSig.size())
         return memoSig[level];
 

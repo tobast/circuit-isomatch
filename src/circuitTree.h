@@ -66,6 +66,12 @@ class CircuitTree {
          */
         void failIfFrozen() const;
 
+        /**
+         * Checks whether the circuit is frozen, and fails with `NotFrozen` if
+         * it is not.
+         */
+        void failIfNotFrozen() const;
+
         bool frozen;
 
     private:

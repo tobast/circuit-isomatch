@@ -13,3 +13,8 @@ void CircuitTree::failIfFrozen() const {
         throw Frozen();
 }
 
+void CircuitTree::failIfNotFrozen() const {
+    if(!frozen)
+        throw NotFrozen();
+}
+
