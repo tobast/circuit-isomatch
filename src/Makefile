@@ -11,7 +11,8 @@ OBJS = \
 	   wireId.o \
 	   wireManager.o \
 	   circuitTree.o \
-	   circuitGroup.o
+	   circuitGroup.o \
+	   circuitTristate.o
 
 ###############################################################################
 
