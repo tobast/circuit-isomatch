@@ -9,7 +9,9 @@ NAME = isomatch
 TARGET = lib$(NAME).a
 OBJS = \
 	   wireId.o \
-	   wireManager.o
+	   wireManager.o \
+	   circuitTree.o \
+	   circuitGroup.o
 
 ###############################################################################
 

@@ -4,7 +4,7 @@ using namespace std;
 
 size_t CircuitTree::nextCircuitId = 0;
 
-CircuitTree::CircuitTree() : circuitId(nextCircuitId), frozen(false) {
+CircuitTree::CircuitTree() : frozen(false), circuitId(nextCircuitId) {
     nextCircuitId++;
 }
 

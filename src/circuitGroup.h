@@ -2,18 +2,28 @@
 #include <string>
 #include <vector>
 
+#include "wireId.h"
 #include "circuitTree.h"
+
+class IOPin {
+    public:
+        IOPin(WireId* formal, WireId* actual, CircuitGroup* group);
+
+        WireId* formal() const { return _formal; }
+        WireId* actual() const { return _actual; }
+        CircuitGroup* group() const { return _group; }
+    private:
+        WireId* _formal;
+        WireId* _actual;
+        CircuitGroup* _group;
+};
+
 
 class CircuitGroup : public CircuitTree {
     public:
-        struct IOPin {
-            WireId formal;
-            WireId actual;
-        };
-
         CircuitGroup(const std::string& name);
 
-        bool isLeaf() const { return false; }
+        CircType circType() const { return CIRC_GROUP; }
         sig_t sign(int level=2);
 
         /**

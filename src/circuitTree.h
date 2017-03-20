@@ -19,12 +19,20 @@ class CircuitTree {
             }
         };
 
+        enum CircType {
+            CIRC_GROUP,
+            CIRC_COMB,
+            CIRC_DELAY,
+            CIRC_TRI,
+            CIRC_ASSERT,
+        };
+
         CircuitTree();
 
         /**
-         * Returns whether this tree element is a leaf or a group.
+         * Returns the tree element's type
          */
-        virtual bool isLeaf() const = 0;
+        virtual CircType circType() const = 0;
 
         /**
          * Computes the signature of the circuit. Memoized function, it will

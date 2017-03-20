@@ -1,6 +1,15 @@
 #include "circuitGroup.h"
 #include <cassert>
 
+IOPin::IOPin(WireId* formal,
+        WireId* actual,
+        CircuitGroup* group) :
+    _formal(formal), _actual(actual), _group(group)
+{
+    formal->connect(this, actual);
+    actual->connect(this, formal);
+}
+
 CircuitGroup::CircuitGroup(const std::string& name) :
     CircuitTree(), name(name)
 {}
@@ -26,12 +35,12 @@ void CircuitGroup::addChild(CircuitTree* child) {
     grpChildren.push_back(child);
 }
 
-void CircuitGroup::addInput(const CircuitGroup::IOPin& pin) {
+void CircuitGroup::addInput(const IOPin& pin) {
     failIfFrozen();
     grpInputs.push_back(pin);
 }
 
-void CircuitGroup::addOutput(const CircuitGroup::IOPin& pin) {
+void CircuitGroup::addOutput(const IOPin& pin) {
     failIfFrozen();
     grpOutputs.push_back(pin);
 }
@@ -44,19 +53,19 @@ const std::vector<CircuitTree*>& CircuitGroup::getChildren() const {
     return grpChildren;
 }
 
-std::vector<CircuitGroup::IOPin>& CircuitGroup::getInputs() {
+std::vector<IOPin>& CircuitGroup::getInputs() {
     failIfFrozen();
     return grpInputs;
 }
-const std::vector<CircuitGroup::IOPin>& CircuitGroup::getInputs() const {
+const std::vector<IOPin>& CircuitGroup::getInputs() const {
     return grpInputs;
 }
 
-std::vector<CircuitGroup::IOPin>& CircuitGroup::getOutputs() {
+std::vector<IOPin>& CircuitGroup::getOutputs() {
     failIfFrozen();
     return grpOutputs;
 }
-const std::vector<CircuitGroup::IOPin>& CircuitGroup::getOutputs() const {
+const std::vector<IOPin>& CircuitGroup::getOutputs() const {
     return grpOutputs;
 }
 
