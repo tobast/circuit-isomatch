@@ -37,12 +37,12 @@ class CircuitTree {
         /**
          * Computes the signature of the circuit. Memoized function, it will
          * only be costy on the first run.
-         * freeze must have been called before.
+         * The circuit must be frozen.
          *
          * @param level Defines the signature level used. Lower means cheaper,
          * but also less precise.
          */
-        virtual sig_t sign(int level=2) = 0;
+         sig_t sign(int level=2);
 
         /**
          * Freezes the circuit forever: any function modifying its structure
@@ -60,6 +60,13 @@ class CircuitTree {
         }
 
     protected:
+        /** Computes the actual signature of the circuit when it was not
+         * previously memoized.
+         * Computing the signature of level `n` requires the signature of level
+         * `n-1`, this function is thus expected to call `sign` whenever
+         * `level > 0`. */
+        virtual sig_t computeSignature(int level) = 0;
+
         /**
          * Checks whether the circuit is frozen, and fails with `Frozen` if it
          * is.
@@ -73,6 +80,7 @@ class CircuitTree {
         void failIfNotFrozen() const;
 
         bool frozen;
+        std::vector<sig_t> memoSig;
 
     private:
         static size_t nextCircuitId;

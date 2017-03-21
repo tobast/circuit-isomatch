@@ -14,15 +14,6 @@ CircuitGroup::CircuitGroup(const std::string& name) :
     CircuitTree(), name(name)
 {}
 
-CircuitGroup::sig_t CircuitGroup::sign(int level) {
-    failIfNotFrozen();
-    if(level < (int)memoSig.size())
-        return memoSig[level];
-
-    assert(false); //TODO implement
-    return 0;
-}
-
 void CircuitGroup::freeze() {
     for(auto child: grpChildren)
         child->freeze();
@@ -66,5 +57,10 @@ std::vector<IOPin>& CircuitGroup::getOutputs() {
 }
 const std::vector<IOPin>& CircuitGroup::getOutputs() const {
     return grpOutputs;
+}
+
+CircuitGroup::sig_t CircuitGroup::computeSignature(int level) {
+    (&level); // UNUSED
+    assert(false); // TODO implement
 }
 

@@ -9,11 +9,8 @@ CircuitTristate::CircuitTristate(WireId* from, WireId* to, WireId* enable) :
     enable->connect(this);
 }
 
-CircuitTristate::sig_t CircuitTristate::sign(int level) {
-    failIfNotFrozen();
-    if(level < (int)memoSig.size())
-        return memoSig[level];
-
+CircuitTristate::sig_t CircuitTristate::computeSignature(int level) {
+    (&level); // UNUSED
     assert(false); // TODO implement
 }
 

@@ -11,8 +11,6 @@ class CircuitAssert : public CircuitTree {
 
         CircType circType() const { return CIRC_ASSERT; }
 
-        sig_t sign(int level=2);
-
         /** Adds `wire` as the next input for this gate.
          * Requires the gate to be unfrozen.
          */
@@ -24,11 +22,12 @@ class CircuitAssert : public CircuitTree {
         /** Gate's expression */
         const ExpressionBase& expression() const { return gateExpr; }
 
+    protected:
+        sig_t computeSignature(int level);
+
     private:
         std::string name;
         std::vector<WireId*> gateInputs;
         ExpressionBase gateExpr;
-
-        std::vector<sig_t> memoSig;
 };
 

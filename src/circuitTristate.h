@@ -8,8 +8,6 @@ class CircuitTristate : public CircuitTree {
 
         CircType circType() const { return CIRC_TRI; }
 
-        sig_t sign(int level=2);
-
         /** Gets the input wire. */
         const WireId* input() const { return wireInput; }
 
@@ -19,8 +17,10 @@ class CircuitTristate : public CircuitTree {
         /** Gets the enable wire. */
         const WireId* enable() const { return wireEnable; }
 
+    protected:
+        sig_t computeSignature(int level);
+
     private:
         WireId *wireInput, *wireOutput, *wireEnable;
-        std::vector<sig_t> memoSig;
 };
 

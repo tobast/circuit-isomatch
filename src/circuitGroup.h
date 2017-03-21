@@ -24,7 +24,6 @@ class CircuitGroup : public CircuitTree {
         CircuitGroup(const std::string& name);
 
         CircType circType() const { return CIRC_GROUP; }
-        sig_t sign(int level=2);
 
         /**
          * Freezes the circuit as `CircuitTree::freeze` does, but also freezes
@@ -74,9 +73,11 @@ class CircuitGroup : public CircuitTree {
         /** Group's outputs */
         const std::vector<IOPin>& getOutputs() const;
 
+    protected:
+        sig_t computeSignature(int level);
+
     private:
         std::string name;
-        std::vector<sig_t> memoSig;
 
         std::vector<CircuitTree*> grpChildren;
         std::vector<IOPin> grpInputs, grpOutputs;
