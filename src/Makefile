@@ -14,7 +14,8 @@ OBJS = \
 	   circuitGroup.o \
 	   circuitTristate.o \
 	   circuitDelay.o \
-	   circuitAssert.o
+	   circuitAssert.o \
+	   circuitComb.o
 
 ###############################################################################
 
