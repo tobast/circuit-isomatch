@@ -13,7 +13,8 @@ OBJS = \
 	   circuitTree.o \
 	   circuitGroup.o \
 	   circuitTristate.o \
-	   circuitDelay.o
+	   circuitDelay.o \
+	   circuitAssert.o
 
 ###############################################################################
 
