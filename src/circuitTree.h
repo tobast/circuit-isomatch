@@ -62,9 +62,8 @@ class CircuitTree {
     protected:
         /** Computes the actual signature of the circuit when it was not
          * previously memoized.
-         * Computing the signature of level `n` requires the signature of level
-         * `n-1`, this function is thus expected to call `sign` whenever
-         * `level > 0`. */
+         * You should call `sign` when overriding this function and needing a
+         * lower-level signature of a block. */
         virtual sig_t computeSignature(int level) = 0;
 
         /**

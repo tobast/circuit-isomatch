@@ -11,12 +11,13 @@ CircuitTree::CircuitTree() : frozen(false), circuitId(nextCircuitId) {
 
 CircuitTree::sig_t CircuitTree::sign(int level) {
     failIfNotFrozen();
-    if(level < (int)memoSig.size())
+    if(level < (int)memoSig.size() && memoSig[level] != 0)
         return memoSig[level];
 
     sig_t signature = computeSignature(level);
-    assert((int)memoSig.size() == level);
-    memoSig.push_back(signature);
+    while((int)memoSig.size() <= level) // Create [level] cell
+        memoSig.push_back(0);
+    memoSig[level] = signature;
     return signature;
 }
 
