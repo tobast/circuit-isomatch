@@ -4,10 +4,20 @@
 IOPin::IOPin(WireId* formal,
         WireId* actual,
         CircuitGroup* group) :
-    _formal(formal), _actual(actual), _group(group)
+    _formal(NULL), _actual(actual), _group(group)
 {
-    formal->connect(this, actual);
-    actual->connect(this, formal);
+    connect(formal);
+}
+
+IOPin::IOPin(std::string formalName, WireId* actual, CircuitGroup* group) :
+    _formal(NULL), _formalName(formalName), _actual(actual), _group(group)
+{}
+
+void IOPin::connect(WireId* formal) {
+    if(_formal == NULL)
+        throw IOPin::AlreadyConnected();
+    _formal = formal;
+    formal->connect(this, _actual);
 }
 
 CircuitGroup::CircuitGroup(const std::string& name) :
@@ -22,6 +32,13 @@ void CircuitGroup::freeze() {
 
 void CircuitGroup::addChild(CircuitTree* child) {
     failIfFrozen();
+
+    if(child->circType() == CIRC_GROUP) {
+        CircuitGroup* grp = static_cast<CircuitGroup*>(child);
+        for(auto inp : grp->getInputs()) {
+            inp->connect(
+        }
+    }
     grpChildren.push_back(child);
 }
 

@@ -1,19 +1,36 @@
 #pragma once
 #include <string>
 #include <vector>
+#include <exception>
 
 #include "wireId.h"
 #include "circuitTree.h"
 
+/** Input/output pin for a `CircuitGroup` */
 class IOPin {
     public:
+        class AlreadyConnected : std::exception {};
+
         IOPin(WireId* formal, WireId* actual, CircuitGroup* group);
 
+        /** Partially connect this pin, leave its outter part exposed for later
+         * `connect`.
+         */
+        IOPin(std::string formalName, WireId* actual, CircuitGroup* group);
+
+        /** Connects the outter part of the pin to the given wire.
+         * @throw AlreadyConnected if the pin is already connected.
+         */
+        void connect(WireId* formal);
+
         WireId* formal() const { return _formal; }
+        std::string formalName() const { return _formalName; }
         WireId* actual() const { return _actual; }
         CircuitGroup* group() const { return _group; }
+
     private:
         WireId* _formal;
+        std::string _formalName; /// Used if formal is not yet connected
         WireId* _actual;
         CircuitGroup* _group;
 };
@@ -32,7 +49,9 @@ class CircuitGroup : public CircuitTree {
         void freeze();
 
         /**
-         * Adds `child` as a child of this group.
+         * Adds `child` as a child of this group. All external pins of `child`
+         * are disconnected, and reconnected to this group's corresponding
+         * wires during the process.
          * Requires the group to be unfrozen.
          */
         void addChild(CircuitTree* child);

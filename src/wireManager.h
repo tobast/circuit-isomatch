@@ -44,7 +44,14 @@ class WireManager {
          *
          * @throws AlreadyDefined
          */
-        WireId& fresh(const std::string& name);
+        WireId* fresh(const std::string& name);
+
+        /**
+         * Allocates a fresh wire without storing its name in any lookup table.
+         * This allows to create wires that will never be plugged to anything,
+         * eg. to create a root circuit group's external pin
+         */
+        WireId* freshInsulated(const std::string& name);
 
         /**
          * Checks the existence of a given wire
@@ -63,14 +70,14 @@ class WireManager {
          * @param dontCreate If set to `true`, do not create the wire if it
          * does not exist, but raise NotDefined instead.
          */
-        WireId& wire(const std::string& name, bool dontCreate=false);
+        WireId* wire(const std::string& name, bool dontCreate=false);
 
         /**
          * Retrieves an existing wire by its id.
          *
          * @throws NotDefined if the given id does not exist
          */
-        WireId& wire(size_t id);
+        WireId* wire(size_t id);
 
     private:
         std::vector<WireId> wireById;
