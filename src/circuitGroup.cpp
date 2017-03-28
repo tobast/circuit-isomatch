@@ -26,6 +26,10 @@ CircuitGroup::CircuitGroup(const std::string& name) :
     wireManager_ = new WireManager();
 }
 
+CircuitGroup::CircuitGroup(const std::string& name, WireManager* manager) :
+    CircuitTree(), name(name), wireManager_(manager)
+{}
+
 CircuitGroup::~CircuitGroup() {
     delete wireManager_;
 }

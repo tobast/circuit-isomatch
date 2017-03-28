@@ -33,6 +33,7 @@ class WireId {
 		 *
 		 * @param id Id of the wire
 		 * @param name Convenience name for the wire
+         * @param manager the `WireManager` used to create this wire
 		 */
 		WireId(size_t id, const std::string& name, WireManager* manager);
 

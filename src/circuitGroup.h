@@ -39,7 +39,20 @@ class IOPin {
 
 class CircuitGroup : public CircuitTree {
     public:
+        /** Create a `CircuitGroup` with a given `name`. Its internal
+         * `WireManager` is automatically created.
+         */
         CircuitGroup(const std::string& name);
+
+        /** Create a `CircuitManager` with a given `name` and `WireManager`.
+         * The wire manager should **not** be shared with another
+         * `CircuitGroup`, as this would mean they would share the same wire
+         * naming scope.  The `manager` gets automatically `delete`d when the
+         * group is de-allocated.
+         */
+        CircuitGroup(const std::string& name, WireManager* manager);
+
+        /** Destroys the inner `WireManager`. */
         ~CircuitGroup();
 
         CircType circType() const { return CIRC_GROUP; }
