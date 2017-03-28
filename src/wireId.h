@@ -14,6 +14,7 @@
 // Circular inclusion
 class CircuitTree;
 class CircuitGroup;
+class WireManager;
 class IOPin;
 
 class WireId {
@@ -33,20 +34,23 @@ class WireId {
 		 * @param id Id of the wire
 		 * @param name Convenience name for the wire
 		 */
-		WireId(size_t id, const std::string& name);
+		WireId(size_t id, const std::string& name, WireManager* manager);
 
 		/**
 		 * Id-based equality
 		 */
 		bool operator==(const WireId& oth) const {
-			return id == oth.id;
+			return manager_ == oth.manager_
+                && id == oth.id;
+                // Pointer equality should be enough?
 		}
 
 		/**
 		 * Id-based comparaison
 		 */
 		bool operator<(const WireId& oth) const {
-			return id < oth.id;
+			return manager_ < oth.manager_ ||
+                (manager_ == oth.manager_ && id < oth.id);
 		}
 
         /** Connect a circuit to this wire. Should be handled by circuit
@@ -79,6 +83,7 @@ class WireId {
 
 		size_t id;
 		std::string name;
+        WireManager* manager_;
         std::vector<CircuitTree*> _connected;
         std::vector<PinConnection> _connectedPins;
 };

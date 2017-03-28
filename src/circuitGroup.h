@@ -4,6 +4,7 @@
 #include <exception>
 
 #include "wireId.h"
+#include "wireManager.h"
 #include "circuitTree.h"
 
 /** Input/output pin for a `CircuitGroup` */
@@ -39,6 +40,7 @@ class IOPin {
 class CircuitGroup : public CircuitTree {
     public:
         CircuitGroup(const std::string& name);
+        ~CircuitGroup();
 
         CircType circType() const { return CIRC_GROUP; }
 
@@ -63,10 +65,22 @@ class CircuitGroup : public CircuitTree {
         void addInput(const IOPin& pin);
 
         /**
+         * Adds an input pin to this group.
+         * Requires the group to be unfrozen.
+         */
+        void addInput(const std::string& formal, WireId* actual);
+
+        /**
          * Adds `pin` as output pin of this group.
          * Requires the group to be unfrozen.
          */
         void addOutput(const IOPin& pin);
+
+        /**
+         * Adds an output pin to this group.
+         * Requires the group to be unfrozen.
+         */
+        void addOutput(const std::string& formal, WireId* actual);
 
         /**
          * Group's subcircuits, mutable.
@@ -92,11 +106,20 @@ class CircuitGroup : public CircuitTree {
         /** Group's outputs */
         const std::vector<IOPin>& getOutputs() const;
 
+        /** Group's `WireManager`. */
+        WireManager* wireManager() { return wireManager_; }
+        // Note: this cannot be `const`, since the `wireManager_` is muted
+        // whenever one tries to allocate a wire.
+
     protected:
         sig_t computeSignature(int level);
 
     private:
+        void setAncestor(CircuitTree* tree) const;
+
         std::string name;
+
+        WireManager* wireManager_;
 
         std::vector<CircuitTree*> grpChildren;
         std::vector<IOPin> grpInputs, grpOutputs;

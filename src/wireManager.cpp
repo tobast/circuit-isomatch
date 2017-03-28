@@ -7,13 +7,13 @@ WireManager::WireManager()
 WireId* WireManager::fresh(const std::string& name) {
     if(wireByName.find(name) == wireByName.end())
         throw AlreadyDefined(name.c_str());
-    wireById.push_back(WireId(wireById.size(), name));
+    wireById.push_back(WireId(wireById.size(), name, this));
     wireByName[name] = &wireById.back();
     return &(wireById.back());
 }
 
 WireId* WireManager::freshInsulated(const std::string& name) {
-    wireById.push_back(WireId(wireById.size(), name));
+    wireById.push_back(WireId(wireById.size(), name, this));
     return &(wireById.back());
 }
 

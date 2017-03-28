@@ -59,6 +59,10 @@ class CircuitTree {
             return circuitId == oth.circuitId;
         }
 
+        /** Get the parent group of this circuit. This might be `NULL` if the
+         * group has no parent (yet). */
+        CircuitGroup* ancestor() { return ancestor_; }
+
     protected:
         /** Computes the actual signature of the circuit when it was not
          * previously memoized.
@@ -81,8 +85,13 @@ class CircuitTree {
         bool frozen;
         std::vector<sig_t> memoSig;
 
+        /** Group this circuit belongs to. This is automatically set. */
+        CircuitGroup* ancestor_;
+
     private:
         static size_t nextCircuitId;
         size_t circuitId;
+
+    friend CircuitGroup; // FIXME? To allow changing `ancestor_`
 };
 

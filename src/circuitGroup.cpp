@@ -22,7 +22,13 @@ void IOPin::connect(WireId* formal) {
 
 CircuitGroup::CircuitGroup(const std::string& name) :
     CircuitTree(), name(name)
-{}
+{
+    wireManager_ = new WireManager();
+}
+
+CircuitGroup::~CircuitGroup() {
+    delete wireManager_;
+}
 
 void CircuitGroup::freeze() {
     for(auto child: grpChildren)
@@ -33,10 +39,14 @@ void CircuitGroup::freeze() {
 void CircuitGroup::addChild(CircuitTree* child) {
     failIfFrozen();
 
+    child->ancestor_ = this; // CircuitGroup is friend of CircuitTree
     if(child->circType() == CIRC_GROUP) {
         CircuitGroup* grp = static_cast<CircuitGroup*>(child);
         for(auto inp : grp->getInputs()) {
-            inp->connect(
+            inp.connect(wireManager_->wire(inp.formalName()));
+        }
+        for(auto out : grp->getOutputs()) {
+            out.connect(wireManager_->wire(out.formalName()));
         }
     }
     grpChildren.push_back(child);
@@ -47,9 +57,17 @@ void CircuitGroup::addInput(const IOPin& pin) {
     grpInputs.push_back(pin);
 }
 
+void CircuitGroup::addInput(const std::string& formal, WireId* actual) {
+    addInput(IOPin(formal, actual, this));
+}
+
 void CircuitGroup::addOutput(const IOPin& pin) {
     failIfFrozen();
     grpOutputs.push_back(pin);
+}
+
+void CircuitGroup::addOutput(const std::string& formal, WireId* actual) {
+    addOutput(IOPin(formal, actual, this));
 }
 
 std::vector<CircuitTree*>& CircuitGroup::getChildren() {

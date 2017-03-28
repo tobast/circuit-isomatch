@@ -5,7 +5,8 @@
 #include <unordered_set>
 using namespace std;
 
-WireId::WireId(size_t id, const std::string& name) : id(id), name(name)
+WireId::WireId(size_t id, const std::string& name, WireManager* manager) :
+    id(id), name(name), manager_(manager)
 {}
 
 void WireId::connect(CircuitTree* circ) {
