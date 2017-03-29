@@ -1,17 +1,34 @@
 %code requires {
 #include <vector>
 #include <string>
+#include <cstring>
 using namespace std;
 
 #include <isomatch.h>  // build it against isomatch
 #include "parseTools.h"
 }
 
+%code provides {
+CircuitTree* doParse(FILE* in);
+}
+
 %code {
+using namespace parseTools;
+
+vector<WireManager*> wireManagers;
+
+WireId* nextWire() {
+    static int curId = 0;
+    return wireManagers.back()->fresh(
+        std::string(" _wire_") + std::to_string(curId));
+}
+
 void yyerror(const char *s)
 {
     fprintf(stderr, "error: %s\n", s);
 }
+
+typedef ListElem<CircuitTree*> CircList;
 
 extern "C" {
     int yywrap() {
@@ -20,18 +37,26 @@ extern "C" {
 }
 
 extern int yylex(void);
+extern FILE* yyin;
+
+CircuitTree* doParse(FILE* in) {
+    yyin = in;
+    yyparse();
+    return yylval.circtree_val;
+}
 }
 
 %union {
+    YYSTYPE() { memset(this, 0, sizeof(YYSTYPE)); }
     char* sval;
     int ival;
     CircuitTree* circtree_val;
-/*
-    vector<string> strvect_val;
-    ListElem<string> strlist_val;
-    ListElem<CircuitTree*> circtreelist_val;
-    vector<CircuitTree*> circtreevect_val;
-*/
+    parseTools::ListElem<string>* strlist_val;
+    parseTools::ListElem<CircuitTree*>* circtreelist_val;
+    parseTools::ExprConstruction exprconstruction_val;
+    ExpressionBinOperator binop_val;
+    ExpressionUnOperator unop_val;
+    ExpressionUnOperatorCst unopcst_val;
 }
 
 %token OP_AND OP_OR OP_XOR OP_ADD OP_SUB OP_MUL OP_DIV OP_MOD
@@ -43,44 +68,195 @@ extern int yylex(void);
 %token <sval> IDENT
 %token <ival> NUMBER
 
+%start entry
 %type <circtree_val> entry
-/*
 %type <circtree_val> group
-%type <strvect_val> identCommaList
-%type <strlist_val> identCommaListInner
-%type <circtreevect_val> stmtList
-%type <circtreevect_val> stmtListInner
-*/
+%type <strlist_val> identCommaList
+%type <circtreelist_val> stmtList
+%type <circtreelist_val> stmt
+%type <exprconstruction_val> expr
+%type <binop_val> binop
+%type <unop_val> unop
+%type <unopcst_val> unopcst
 
 %%
 
 entry:
-     TOK_EOF      { $$ = NULL; }
-/*
-entry:
-     group TOK_EOF      { $$ = $1 }
+     group TOK_EOF      { $$ = $1; }
 
 group:
-     LET IDENT
+     let IDENT
         '(' identCommaList ')' ARROW
         '(' identCommaList ')' '{'
         stmtList
         '}'
                         {
-                            $$ = makeGroup($2, $4, $8, $11);
+                            CircuitGroup* stub = new CircuitGroup(
+                                $2, wireManagers.back());
+                            makeGroup(stub,
+                                      $4->yield(),
+                                      $8->yield(),
+                                      $11->yield());
+                            wireManagers.pop_back();
+                            $$ = stub;
+                        }
+
+let:
+    LET                 {
+                            wireManagers.push_back(new WireManager());
                         }
 
 identCommaList:
-    identCommaListInner { $$ = $1.toVect(); }
-
-identCommaListInner:
-    IDENT               { $$ = {NULL, $1}; }
-  | IDENT identCommaListInner
-                        { $$ = {$2, $1}; }
+    IDENT               { $$ = new ListElem<string>($1); }
+  | IDENT identCommaList
+                        { $$ = new ListElem<string>($1, $2); }
 
 stmtList:
-    stmtListInner       { $$ = $1.toVect(); }
+    stmt                { $$ = $1; }
+  | stmt stmtList       {
+                            $1->append($2);
+                            $$ = $1;
+                        }
 
-stmtListInner:
-    'a'                 { $$ = NULL } // TODO
-*/
+stmt:
+    IDENT '=' expr      {
+                            wireManagers.back()->rename(
+                                $3.outWire->name(), $1);
+                            $$ = $3.gates;
+                        }
+  | group               { $$ = new CircList($1); }
+
+expr:
+    '(' expr ')'        { $$ = $2; }
+  | binop expr expr     {
+                            WireId* outWire = nextWire();
+                            WireId* left  = $2.outWire;
+                            WireId* right = $3.outWire;
+                            CircuitComb* comb = new CircuitComb();
+                            comb->addInput(left);
+                            comb->addInput(right);
+                            comb->addOutput(
+                                ExpressionBinOp(
+                                    ExpressionVar(0),
+                                    ExpressionVar(1),
+                                    $1),
+                                outWire);
+
+                            CircList* nexts = $2.gates;
+                            nexts->append($3.gates);
+                            $$ = ExprConstruction(
+                                outWire,
+                                new CircList(comb, nexts));
+                        }
+  | unop expr           {
+                            WireId* outWire = nextWire();
+                            WireId* from = $2.outWire;
+                            CircuitComb* comb = new CircuitComb();
+                            comb->addInput(from);
+                            comb->addOutput(
+                                ExpressionUnOp(
+                                    ExpressionVar(0),
+                                    $1),
+                                outWire);
+
+                            $$ = ExprConstruction(
+                                outWire,
+                                new CircList(comb, $2.gates));
+                        }
+  | unopcst expr NUMBER {
+                            WireId* outWire = nextWire();
+                            WireId* from = $2.outWire;
+                            CircuitComb* comb = new CircuitComb();
+                            comb->addInput(from);
+                            comb->addOutput(
+                                ExpressionUnOpCst(
+                                    ExpressionVar(0),
+                                    $3,
+                                    $1),
+                                outWire);
+
+                            $$ = ExprConstruction(
+                                outWire,
+                                new CircList(comb, $2.gates));
+                        }
+  | OP_MERGE expr expr  {
+                            WireId* outWire = nextWire();
+                            WireId* left  = $2.outWire;
+                            WireId* right = $3.outWire;
+                            CircuitComb* merger = new CircuitComb();
+                            merger->addInput(left);
+                            merger->addInput(right);
+                            merger->addOutput(
+                                ExpressionMerge(
+                                    ExpressionVar(0), ExpressionVar(1)),
+                                outWire);
+                            $$ = ExprConstruction(
+                                outWire,
+                                new CircList(merger, $2.gates));
+                        }
+  | OP_SLICE expr NUMBER NUMBER {
+                            WireId* outWire = nextWire();
+                            WireId* from = $2.outWire;
+                            CircuitComb* slicer = new CircuitComb();
+                            slicer->addInput(from);
+                            slicer->addOutput(
+                                ExpressionSlice(ExpressionVar(0), $3, $4),
+                                outWire);
+                            $$ = ExprConstruction(
+                                outWire,
+                                new CircList(slicer, $2.gates));
+                        }
+  | DELAY expr          {
+                            WireId* outWire = nextWire();
+                            WireId* from = $2.outWire;
+                            $$ = ExprConstruction(
+                                outWire,
+                                new CircList(
+                                    new CircuitDelay(from, outWire),
+                                    $2.gates));
+                        }
+  | TRISTATE expr expr  {
+                            WireId* outWire = nextWire();
+                            WireId* from = $2.outWire;
+                            WireId* enable = $3.outWire;
+                            CircuitTristate* out = new CircuitTristate(
+                                from, outWire, enable);
+                            
+                            CircList* nexts = $2.gates;
+                            nexts->append($3.gates);
+                            CircList* outList = new CircList(out, nexts);
+                            $$ = ExprConstruction(outWire, outList);
+                        }
+  | IDENT               { 
+                            $$ = ExprConstruction(
+                                wireManagers.back()->wire($1),
+                                (ListElem<CircuitTree*>*)NULL);
+                        }
+  | NUMBER              {
+                            WireId* outWire = nextWire();
+                            CircuitComb* out = new CircuitComb();
+                            out->addOutput(ExpressionConst($1), outWire);
+                            $$ = ExprConstruction(outWire, out);
+                        }
+                            
+
+binop:
+     OP_AND             { $$ = BAnd; }
+   | OP_OR              { $$ = BOr; }
+   | OP_XOR             { $$ = BXor; }
+   | OP_ADD             { $$ = BAdd; }
+   | OP_SUB             { $$ = BSub; }
+   | OP_MUL				{ $$ = BMul; }
+   | OP_DIV				{ $$ = BDiv; }
+   | OP_MOD				{ $$ = BMod; }
+   | OP_LSR				{ $$ = BLsr; }
+   | OP_LSL				{ $$ = BLsl; }
+   | OP_ASR				{ $$ = BAsr; }
+
+unop:
+    OP_NOT              { $$ = UNot; }
+
+unopcst:
+    OP_CLSR             { $$ = UCLsr; }
+  | OP_CLSL             { $$ = UCLsl; }
+  | OP_CASR             { $$ = UCAsr; }

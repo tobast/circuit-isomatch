@@ -13,7 +13,7 @@ OBJS = main.o parser.tab.o lexer.yy.o parseTools.o
 all: $(TARGET)
 
 $(TARGET): $(OBJS)
-	$(CXX) $(CXXLIBS) $(CXXFLAGS) -o $@ $^
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(CXXLIBS)
 
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) -o $@ -c $<
