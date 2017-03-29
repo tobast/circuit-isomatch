@@ -6,7 +6,7 @@
 using namespace std;
 
 WireId::WireId(size_t id, const std::string& name, WireManager* manager) :
-    id(id), name(name), manager_(manager)
+    id(id), name_(name), manager_(manager)
 {}
 
 void WireId::connect(CircuitTree* circ) {

@@ -81,6 +81,18 @@ class WireManager {
          */
         WireId* wire(size_t id);
 
+        /** Renames a wire. Be sure to call this only if you do not rely on the
+         * previous wire's name: the old name won't be mapped to that wire
+         * anymore.
+         * @throws NotDefined if there is no such wire. */
+        void rename(const std::string& curName, const std::string& newName);
+
+        /** Renames a wire. Be sure to call this only if you do not rely on the
+         * previous wire's name: the old name won't be mapped to that wire
+         * anymore.
+         * @throws NotDefined if there is no such wire. */
+        void rename(size_t id, const std::string& newName);
+
     private:
         std::vector<WireId> wireById;
         std::unordered_map<std::string, WireId*> wireByName;

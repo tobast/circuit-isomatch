@@ -77,16 +77,21 @@ class WireId {
          * the list on-the-fly, which might be a bit slow for heavy use. */
         std::vector<CircuitTree*> connected() const;
 
+        /** Get the name of this wire */
+        const std::string& name() const { return name_; }
+
 	private:
         void walkConnected(std::unordered_set<CircuitTree*>& curConnected,
                 std::unordered_set<WireId>& seenWires,
                 const WireId* curWire) const;
 
 		size_t id;
-		std::string name;
+		std::string name_;
         WireManager* manager_;
         std::vector<CircuitTree*> _connected;
         std::vector<PinConnection> _connectedPins;
+
+    friend WireManager; // set the wire's name
 };
 
 namespace std {

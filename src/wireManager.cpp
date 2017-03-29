@@ -41,3 +41,23 @@ WireId* WireManager::wire(size_t id) {
     return &wireById[id];
 }
 
+void WireManager::rename(size_t id, const std::string& newName) {
+    if(!hasWire(id))
+        throw NotDefined("[id]");
+
+    rename(wireById[id].name(), newName);
+}
+
+void WireManager::rename(const std::string& curName,
+        const std::string& newName)
+{
+    if(!hasWire(curName))
+        throw NotDefined(curName.c_str());
+    if(hasWire(newName))
+        throw AlreadyDefined(newName.c_str());
+
+    WireId* wire = wireByName[curName];
+    wire->name_ = newName;
+    wireByName.erase(curName);
+    wireByName[newName] = wire;
+}
