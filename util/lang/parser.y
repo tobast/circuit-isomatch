@@ -9,7 +9,7 @@ using namespace std;
 }
 
 %code provides {
-CircuitTree* doParse(FILE* in);
+CircuitGroup* doParse(FILE* in);
 }
 
 %code {
@@ -39,10 +39,10 @@ extern "C" {
 extern int yylex(void);
 extern FILE* yyin;
 
-CircuitTree* doParse(FILE* in) {
+CircuitGroup* doParse(FILE* in) {
     yyin = in;
     yyparse();
-    return yylval.circtree_val;
+    return yylval.circgroup_val;
 }
 }
 
@@ -50,6 +50,7 @@ CircuitTree* doParse(FILE* in) {
     YYSTYPE() { memset(this, 0, sizeof(YYSTYPE)); }
     char* sval;
     int ival;
+    CircuitGroup* circgroup_val;
     CircuitTree* circtree_val;
     parseTools::ListElem<string>* strlist_val;
     parseTools::ListElem<CircuitTree*>* circtreelist_val;
@@ -69,7 +70,7 @@ CircuitTree* doParse(FILE* in) {
 %token <ival> NUMBER
 
 %start entry
-%type <circtree_val> entry
+%type <circgroup_val> entry
 %type <circtree_val> group
 %type <strlist_val> identCommaList
 %type <circtreelist_val> stmtList
@@ -82,7 +83,7 @@ CircuitTree* doParse(FILE* in) {
 %%
 
 entry:
-     group TOK_EOF      { $$ = $1; }
+     group TOK_EOF      { $$ = static_cast<CircuitGroup*>($1); }
 
 group:
      let IDENT

@@ -10,7 +10,7 @@ TARGET = langtest
 PARSER = parser.y
 OBJS = main.o parser.tab.o lexer.yy.o parseTools.o
 
-all: $(TARGET)
+all: $(PARSER:.y=.tab.cpp) $(TARGET)
 
 $(TARGET): $(OBJS)
 	$(CXX) $(CXXFLAGS) -o $@ $^ $(CXXLIBS)
@@ -21,8 +21,11 @@ $(TARGET): $(OBJS)
 %.yy.cpp: %.l $(PARSER:.y=.tab.hpp)
 	$(LEX) -o $@ $<
 
-%.tab.cpp %.tab.hpp: %.y
+%.tab.cpp: %.y
 	$(YACC) -d -o $@ $<
+
+%.tab.hpp: %.y
+	$(YACC) -d -o $(@:.hpp=.cpp) $<
 
 clean:
 	rm -rf $(TARGET) *.o *.yy.{cpp,c} *.tab.{cpp,c,h,hpp}
