@@ -10,6 +10,7 @@ TARGET = lib$(NAME).a
 OBJS = \
 	   wireId.o \
 	   wireManager.o \
+	   dotPrint.o \
 	   circuitTree.o \
 	   circuitGroup.o \
 	   circuitTristate.o \

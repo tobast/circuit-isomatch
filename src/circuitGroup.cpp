@@ -1,5 +1,8 @@
 #include "circuitGroup.h"
+#include "dotPrint.h"
 #include <cassert>
+
+using namespace std;
 
 IOPin::IOPin(WireId* formal,
         WireId* actual,
@@ -96,6 +99,51 @@ std::vector<IOPin>& CircuitGroup::getOutputs() {
 }
 const std::vector<IOPin>& CircuitGroup::getOutputs() const {
     return grpOutputs;
+}
+
+void CircuitGroup::toDot(std::basic_ostream<char>& out, int indent) {
+    const string thisCirc = string("group_") + name + to_string(id());
+
+    dotPrint::indent(out, indent)
+        << "subgraph cluster_" << thisCirc << " {\n";
+    indent += 2;
+    dotPrint::indent(out, indent)
+        << "graph[style=filled, label=\"" << name << "\"]\n";
+
+    // Wires
+    for(auto wire : wireManager()->wires()) {
+        dotPrint::indent(out, indent)
+            << wire.uniqueName() << " [shape=plaintext]"
+            << '\n';
+    }
+
+    // IO pins
+    for(auto inPin : grpInputs) {
+        if(inPin.formal() != NULL)
+            dotPrint::indent(out, indent)
+                << inPin.actual()->uniqueName()
+                << " -> "
+                << inPin.formal()->uniqueName()
+                << " [arrowhead=none]"
+                << '\n';
+    }
+    for(auto outPin : grpOutputs) {
+        if(outPin.formal() != NULL)
+            dotPrint::indent(out, indent)
+                << outPin.actual()->uniqueName()
+                << " -> "
+                << outPin.formal()->uniqueName()
+                << " [arrowhead=none]"
+                << '\n';
+    }
+
+    // Children
+    for(auto child : grpChildren)
+        child->toDot(out, indent);
+
+    indent -= 2;
+    dotPrint::indent(out, indent)
+        << "}\n";
 }
 
 CircuitGroup::sig_t CircuitGroup::computeSignature(int level) {

@@ -1,5 +1,6 @@
 #pragma once
 #include <exception>
+#include <ostream>
 
 #include "wireId.h"
 
@@ -28,6 +29,7 @@ class CircuitTree {
         };
 
         CircuitTree();
+        virtual ~CircuitTree();
 
         /**
          * Returns the tree element's type
@@ -62,6 +64,13 @@ class CircuitTree {
         /** Get the parent group of this circuit. This might be `NULL` if the
          * group has no parent (yet). */
         CircuitGroup* ancestor() { return ancestor_; }
+
+        /** Get this circuit's id */
+        size_t id() const { return circuitId; }
+
+        /** Generates a Dot representation of the circuit, primarily intended
+         * for debugging. */
+        virtual void toDot(std::basic_ostream<char>& out, int indent=0) = 0;
 
     protected:
         /** Computes the actual signature of the circuit when it was not

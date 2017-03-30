@@ -11,6 +11,9 @@ CircuitTree::CircuitTree() :
     nextCircuitId++;
 }
 
+CircuitTree::~CircuitTree()
+{}
+
 CircuitTree::sig_t CircuitTree::sign(int level) {
     failIfNotFrozen();
     if(level < (int)memoSig.size() && memoSig[level] != 0)

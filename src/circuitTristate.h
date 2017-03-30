@@ -17,6 +17,8 @@ class CircuitTristate : public CircuitTree {
         /** Gets the enable wire. */
         const WireId* enable() const { return wireEnable; }
 
+        void toDot(std::basic_ostream<char>& out, int indent=0);
+
     protected:
         sig_t computeSignature(int level);
 

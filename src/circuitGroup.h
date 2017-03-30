@@ -124,6 +124,8 @@ class CircuitGroup : public CircuitTree {
         // Note: this cannot be `const`, since the `wireManager_` is muted
         // whenever one tries to allocate a wire.
 
+        void toDot(std::basic_ostream<char>& out, int indent=0);
+
     protected:
         sig_t computeSignature(int level);
 

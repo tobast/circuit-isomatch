@@ -64,6 +64,8 @@ class WireManager {
          */
         bool hasWire(size_t id);
 
+        const std::vector<WireId>& wires() const { return wireById; }
+
         /**
          * Retrieves an existing wire, or creates it as a fresh one if it does
          * not exist yet.
@@ -93,8 +95,14 @@ class WireManager {
          * @throws NotDefined if there is no such wire. */
         void rename(size_t id, const std::string& newName);
 
+        /** Get this wire manager's unique id */
+        size_t id() const { return id_; }
+
     private:
         std::vector<WireId> wireById;
         std::unordered_map<std::string, WireId*> wireByName;
+
+        static size_t nextId;
+        size_t id_;
 };
 

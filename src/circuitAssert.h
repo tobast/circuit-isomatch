@@ -22,6 +22,8 @@ class CircuitAssert : public CircuitTree {
         /** Gate's expression */
         const ExpressionBase& expression() const { return gateExpr; }
 
+        void toDot(std::basic_ostream<char>& out, int indent=0);
+
     protected:
         sig_t computeSignature(int level);
 

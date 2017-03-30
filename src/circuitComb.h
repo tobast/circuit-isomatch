@@ -30,6 +30,8 @@ class CircuitComb : public CircuitTree {
             return gateExprs;
         }
 
+        void toDot(std::ostream& out, int indent=0);
+
     protected:
         sig_t computeSignature(int level);
 

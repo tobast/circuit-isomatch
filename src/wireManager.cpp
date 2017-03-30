@@ -1,7 +1,9 @@
 #include "wireManager.h"
 using namespace std;
 
-WireManager::WireManager()
+size_t WireManager::nextId = 0;
+
+WireManager::WireManager() : id_(nextId++)
 {}
 
 WireId* WireManager::fresh(const std::string& name) {

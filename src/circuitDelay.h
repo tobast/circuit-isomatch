@@ -14,6 +14,8 @@ class CircuitDelay : public CircuitTree {
         /** Gets the output wire. */
         const WireId* output() const { return wireOutput; }
 
+        void toDot(std::basic_ostream<char>& out, int indent=0);
+
     protected:
         sig_t computeSignature(int level);
 

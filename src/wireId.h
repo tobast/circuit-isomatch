@@ -40,19 +40,12 @@ class WireId {
 		/**
 		 * Id-based equality
 		 */
-		bool operator==(const WireId& oth) const {
-			return manager_ == oth.manager_
-                && id == oth.id;
-                // Pointer equality should be enough?
-		}
+		bool operator==(const WireId& oth) const;
 
 		/**
 		 * Id-based comparaison
 		 */
-		bool operator<(const WireId& oth) const {
-			return manager_ < oth.manager_ ||
-                (manager_ == oth.manager_ && id < oth.id);
-		}
+		bool operator<(const WireId& oth) const;
 
         /** Connect a circuit to this wire. Should be handled by circuit
          * classes silently.
@@ -79,6 +72,9 @@ class WireId {
 
         /** Get the name of this wire */
         const std::string& name() const { return name_; }
+
+        /** Get this wire's display unique name */
+        std::string uniqueName() const;
 
 	private:
         void walkConnected(std::unordered_set<CircuitTree*>& curConnected,

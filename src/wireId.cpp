@@ -3,11 +3,22 @@
 #include "circuitGroup.h"
 
 #include <unordered_set>
+#include <sstream>
 using namespace std;
 
 WireId::WireId(size_t id, const std::string& name, WireManager* manager) :
     id(id), name_(name), manager_(manager)
 {}
+
+bool WireId::operator==(const WireId& oth) const {
+    return manager_->id() == oth.manager_->id()
+        && id == oth.id;
+}
+
+bool WireId::operator<(const WireId& oth) const {
+    return manager_->id() < oth.manager_->id() ||
+        (manager_ == oth.manager_ && id < oth.id);
+}
 
 void WireId::connect(CircuitTree* circ) {
     _connected.push_back(circ);
@@ -38,6 +49,12 @@ std::vector<CircuitTree*> WireId::connected() const {
     for(auto circ : outSet)
         out.push_back(circ);
     return out;
+}
+
+std::string WireId::uniqueName() const {
+    ostringstream stream;
+    stream << name() << '_' << manager_->id() << '_' << id;
+    return stream.str();
 }
 
 void WireId::walkConnected(std::unordered_set<CircuitTree*>& curConnected,
