@@ -41,19 +41,14 @@ class WireManager {
          */
         WireManager();
 
+        ~WireManager();
+
         /**
          * Allocates a fresh wire with the given name
          *
          * @throws AlreadyDefined
          */
         WireId* fresh(const std::string& name);
-
-        /**
-         * Allocates a fresh wire without storing its name in any lookup table.
-         * This allows to create wires that will never be plugged to anything,
-         * eg. to create a root circuit group's external pin
-         */
-        WireId* freshInsulated(const std::string& name);
 
         /**
          * Checks the existence of a given wire
@@ -64,7 +59,7 @@ class WireManager {
          */
         bool hasWire(size_t id);
 
-        const std::vector<WireId>& wires() const { return wireById; }
+        const std::vector<WireId*>& wires() const { return wireById; }
 
         /**
          * Retrieves an existing wire, or creates it as a fresh one if it does
@@ -99,7 +94,7 @@ class WireManager {
         size_t id() const { return id_; }
 
     private:
-        std::vector<WireId> wireById;
+        std::vector<WireId*> wireById;
         std::unordered_map<std::string, WireId*> wireByName;
 
         static size_t nextId;

@@ -17,7 +17,7 @@ IOPin::IOPin(std::string formalName, WireId* actual, CircuitGroup* group) :
 {}
 
 void IOPin::connect(WireId* formal) {
-    if(_formal == NULL)
+    if(_formal != NULL)
         throw IOPin::AlreadyConnected();
     _formal = formal;
     formal->connect(this, _actual);
@@ -113,7 +113,7 @@ void CircuitGroup::toDot(std::basic_ostream<char>& out, int indent) {
     // Wires
     for(auto wire : wireManager()->wires()) {
         dotPrint::indent(out, indent)
-            << wire.uniqueName() << " [shape=plaintext]"
+            << wire->uniqueName() << " [shape=plaintext]"
             << '\n';
     }
 

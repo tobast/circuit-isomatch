@@ -6,17 +6,17 @@ size_t WireManager::nextId = 0;
 WireManager::WireManager() : id_(nextId++)
 {}
 
-WireId* WireManager::fresh(const std::string& name) {
-    if(wireByName.find(name) == wireByName.end())
-        throw AlreadyDefined(name.c_str());
-    wireById.push_back(WireId(wireById.size(), name, this));
-    wireByName[name] = &wireById.back();
-    return &(wireById.back());
+WireManager::~WireManager() {
+    for(auto wire: wireById)
+        delete wire;
 }
 
-WireId* WireManager::freshInsulated(const std::string& name) {
-    wireById.push_back(WireId(wireById.size(), name, this));
-    return &(wireById.back());
+WireId* WireManager::fresh(const std::string& name) {
+    if(hasWire(name))
+        throw AlreadyDefined(name.c_str());
+    wireById.push_back(new WireId(wireById.size(), name, this));
+    wireByName[name] = wireById.back();
+    return wireById.back();
 }
 
 bool WireManager::hasWire(const std::string& name) {
@@ -40,14 +40,14 @@ WireId* WireManager::wire(const std::string& name, bool dontCreate) {
 WireId* WireManager::wire(size_t id) {
     if(!hasWire(id))
         throw NotDefined("[id]");
-    return &wireById[id];
+    return wireById[id];
 }
 
 void WireManager::rename(size_t id, const std::string& newName) {
     if(!hasWire(id))
         throw NotDefined("[id]");
 
-    rename(wireById[id].name(), newName);
+    rename(wireById[id]->name(), newName);
 }
 
 void WireManager::rename(const std::string& curName,
