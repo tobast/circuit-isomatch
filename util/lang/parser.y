@@ -1,3 +1,7 @@
+%define parse.error verbose
+%locations
+//%define api.pure full
+
 %code requires {
 #include <vector>
 #include <string>
@@ -20,12 +24,13 @@ vector<WireManager*> wireManagers;
 WireId* nextWire() {
     static int curId = 0;
     return wireManagers.back()->fresh(
-        std::string(" _wire_") + std::to_string(curId));
+        std::string(" _wire_") + std::to_string(curId++));
 }
 
-void yyerror(const char *s)
+void yyerror(const char *error)
 {
-    fprintf(stderr, "error: %s\n", s);
+    fprintf(stderr, "error:%d:%d %s\n",
+        yylloc.first_line, yylloc.first_column, error);
 }
 
 typedef ListElem<CircuitTree*> CircList;
@@ -39,10 +44,13 @@ extern "C" {
 extern int yylex(void);
 extern FILE* yyin;
 
+CircuitGroup* outcome = NULL;
+
 CircuitGroup* doParse(FILE* in) {
     yyin = in;
-    yyparse();
-    return yylval.circgroup_val;
+    if(yyparse() != 0)
+        return NULL;
+    return outcome;
 }
 }
 
@@ -50,7 +58,7 @@ CircuitGroup* doParse(FILE* in) {
     YYSTYPE() { memset(this, 0, sizeof(YYSTYPE)); }
     char* sval;
     int ival;
-    CircuitGroup* circgroup_val;
+    //CircuitGroup* circgroup_val;
     CircuitTree* circtree_val;
     parseTools::ListElem<string>* strlist_val;
     parseTools::ListElem<CircuitTree*>* circtreelist_val;
@@ -65,12 +73,12 @@ CircuitGroup* doParse(FILE* in) {
 %token OP_CLSR OP_CLSL OP_CASR
 %token DELAY TRISTATE ASSERT
 %token LET
-%token TOK_EOF ARROW
+%token ARROW
 %token <sval> IDENT
 %token <ival> NUMBER
 
 %start entry
-%type <circgroup_val> entry
+//%type <circgroup_val> entry
 %type <circtree_val> group
 %type <strlist_val> identCommaList
 %type <circtreelist_val> stmtList
@@ -83,7 +91,7 @@ CircuitGroup* doParse(FILE* in) {
 %%
 
 entry:
-     group TOK_EOF      { $$ = static_cast<CircuitGroup*>($1); }
+     group              { outcome = static_cast<CircuitGroup*>($1); }
 
 group:
      let IDENT
@@ -115,8 +123,8 @@ identCommaList:
 stmtList:
     stmt                { $$ = $1; }
   | stmt stmtList       {
-                            $1->append($2);
-                            $$ = $1;
+                            //$1->append($2);
+                            $$ = CircList::concat($1, $2);
                         }
 
 stmt:
@@ -143,8 +151,8 @@ expr:
                                     $1),
                                 outWire);
 
-                            CircList* nexts = $2.gates;
-                            nexts->append($3.gates);
+                            CircList* nexts = CircList::concat(
+                                $2.gates, $3.gates);
                             $$ = ExprConstruction(
                                 outWire,
                                 new CircList(comb, nexts));
@@ -222,13 +230,13 @@ expr:
                             WireId* enable = $3.outWire;
                             CircuitTristate* out = new CircuitTristate(
                                 from, outWire, enable);
-                            
-                            CircList* nexts = $2.gates;
-                            nexts->append($3.gates);
+
+                            CircList* nexts = CircList::concat(
+                                    $2.gates, $3.gates);
                             CircList* outList = new CircList(out, nexts);
                             $$ = ExprConstruction(outWire, outList);
                         }
-  | IDENT               { 
+  | IDENT               {
                             $$ = ExprConstruction(
                                 wireManagers.back()->wire($1),
                                 (ListElem<CircuitTree*>*)NULL);
@@ -239,7 +247,7 @@ expr:
                             out->addOutput(ExpressionConst($1), outWire);
                             $$ = ExprConstruction(outWire, out);
                         }
-                            
+
 
 binop:
      OP_AND             { $$ = BAnd; }

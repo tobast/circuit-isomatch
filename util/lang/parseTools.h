@@ -19,11 +19,14 @@ struct ListElem {
             delete next;
     }
 
-    void append(ListElem* other) {
-        ListElem* end = this;
+    static ListElem<T>* concat(ListElem<T>* first, ListElem<T>* second) {
+        ListElem* end = first;
+        if(end == NULL)
+            return second;
         while(end->next != NULL)
             end = end->next;
-        end->next = other;
+        end->next = second;
+        return first;
     }
 
     /** returns a vector version of this list and de-allocates it. */

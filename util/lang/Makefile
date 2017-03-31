@@ -5,6 +5,7 @@ CXXFLAGS = $(INCLUDE_PATH) -Wall -Wextra -O2 -std=c++14
 CXXLIBS = $(LIBPATH) -lisomatch
 LEX = flex
 YACC = bison
+YACCFLAGS =
 
 TARGET = langtest
 PARSER = parser.y
@@ -22,10 +23,10 @@ $(TARGET): $(OBJS)
 	$(LEX) -o $@ $<
 
 %.tab.cpp: %.y
-	$(YACC) -d -o $@ $<
+	$(YACC) $(YACCFLAGS) -d -o $@ $<
 
 %.tab.hpp: %.y
-	$(YACC) -d -o $(@:.hpp=.cpp) $<
+	$(YACC) $(YACCFLAGS) -d -o $(@:.hpp=.cpp) $<
 
 clean:
 	rm -rf $(TARGET) *.o *.yy.{cpp,c} *.tab.{cpp,c,h,hpp}

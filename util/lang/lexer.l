@@ -1,10 +1,18 @@
 %option nounput
+%option yylineno
 
 %{
     #include "parser.tab.hpp"
     #include <unordered_map>
     #include <string>
     using namespace std;
+
+    int yycolumn = 1;
+
+    #define YY_USER_ACTION yylloc.first_line = yylloc.last_line = yylineno; \
+        yylloc.first_column = yycolumn; \
+        yylloc.last_column = yycolumn + yyleng - 1; \
+        yycolumn += yyleng;
 
     unordered_map<string, yytokentype> keywords = {
         {"AND", OP_AND},
@@ -31,9 +39,10 @@
 %}
 %%
 
-[ \t\n]                     ;
+[ \t]                       ;
+\n                          { yycolumn = 1; }
 ->                          { return ARROW;}
-[[:alpha:]][[:alnum:]]*     {
+[[:alpha:]][[:alnum:]_]*     {
                                 try {
                                     return keywords.at(yytext);
                                 } catch(const out_of_range& e) {
@@ -45,5 +54,4 @@
                                 yylval.ival = atoi(yytext);
                                 return NUMBER;
                             }
-.                           { return yytext[0]; }
-<<EOF>>                     { return TOK_EOF; }
+[.(){}\->=]                 { return yytext[0]; }
