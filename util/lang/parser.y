@@ -20,6 +20,7 @@ CircuitGroup* doParse(FILE* in);
 using namespace parseTools;
 
 vector<WireManager*> wireManagers;
+char* glob_sval = NULL;
 
 WireId* nextWire() {
     static int curId = 0;
@@ -48,7 +49,10 @@ CircuitGroup* outcome = NULL;
 
 CircuitGroup* doParse(FILE* in) {
     yyin = in;
-    if(yyparse() != 0)
+    int rc = yyparse();
+    if(glob_sval != NULL)
+        delete[] glob_sval;
+    if(rc != 0)
         return NULL;
     return outcome;
 }
@@ -58,7 +62,6 @@ CircuitGroup* doParse(FILE* in) {
     YYSTYPE() { memset(this, 0, sizeof(YYSTYPE)); }
     char* sval;
     int ival;
-    //CircuitGroup* circgroup_val;
     CircuitTree* circtree_val;
     parseTools::ListElem<string>* strlist_val;
     parseTools::ListElem<CircuitTree*>* circtreelist_val;
@@ -100,6 +103,8 @@ group:
         stmtList
         '}'
                         {
+                            fprintf(stderr, "++ Got group <%s> <%s>\n", $2,
+                                $4->val.c_str());
                             CircuitGroup* stub = new CircuitGroup(
                                 $2, wireManagers.back());
                             makeGroup(stub,

@@ -7,6 +7,8 @@
     #include <string>
     using namespace std;
 
+    extern char* glob_sval;
+
     int yycolumn = 1;
 
     #define YY_USER_ACTION yylloc.first_line = yylloc.last_line = yylineno; \
@@ -42,11 +44,15 @@
 [ \t]                       ;
 \n                          { yycolumn = 1; }
 ->                          { return ARROW;}
-[[:alpha:]][[:alnum:]_]*     {
+[[:alpha:]][[:alnum:]_]*    {
                                 try {
                                     return keywords.at(yytext);
                                 } catch(const out_of_range& e) {
-                                    yylval.sval = yytext;
+                                    if(glob_sval != NULL)
+                                        delete[] glob_sval;
+                                    glob_sval = new char[strlen(yytext)+1];
+                                    strcpy(glob_sval, yytext);
+                                    yylval.sval = glob_sval;
                                     return IDENT;
                                 }
                             }
