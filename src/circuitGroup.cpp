@@ -104,8 +104,17 @@ const std::vector<IOPin>& CircuitGroup::getOutputs() const {
 void CircuitGroup::toDot(std::basic_ostream<char>& out, int indent) {
     const string thisCirc = string("group_") + name + to_string(id());
 
-    dotPrint::indent(out, indent)
-        << "subgraph cluster_" << thisCirc << " {\n";
+    out << "<<| " << name << "|>>\n";
+
+    if(ancestor() == NULL) {
+        // Root group
+        dotPrint::indent(out, indent)
+            << "digraph " << thisCirc << " {\n";
+    }
+    else {
+        dotPrint::indent(out, indent)
+            << "subgraph cluster_" << thisCirc << " {\n";
+    }
     indent += 2;
     dotPrint::indent(out, indent)
         << "graph[style=filled, label=\"" << name << "\"]\n";
