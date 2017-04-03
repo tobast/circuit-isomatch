@@ -1,3 +1,4 @@
+CHANGING_LIBS = ../../src/libisomatch.a
 LIBPATH = -L../../src
 INCLUDE_PATH = -I../../src
 CXX = g++
@@ -13,8 +14,8 @@ OBJS = main.o parser.tab.o lexer.yy.o parseTools.o
 
 all: $(PARSER:.y=.tab.cpp) $(TARGET)
 
-$(TARGET): $(OBJS)
-	$(CXX) $(CXXFLAGS) -o $@ $^ $(CXXLIBS)
+$(TARGET): $(OBJS) $(CHANGING_LIBS)
+	$(CXX) $(CXXFLAGS) -o $@ $(OBJS) $(CXXLIBS)
 
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) -o $@ -c $<

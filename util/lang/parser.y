@@ -17,10 +17,10 @@ CircuitGroup* doParse(FILE* in);
 }
 
 %code {
+#include <cstdlib>
 using namespace parseTools;
 
 vector<WireManager*> wireManagers;
-char* glob_sval = NULL;
 
 WireId* nextWire() {
     static int curId = 0;
@@ -50,8 +50,6 @@ CircuitGroup* outcome = NULL;
 CircuitGroup* doParse(FILE* in) {
     yyin = in;
     int rc = yyparse();
-    if(glob_sval != NULL)
-        delete[] glob_sval;
     if(rc != 0)
         return NULL;
     return outcome;
@@ -103,8 +101,6 @@ group:
         stmtList
         '}'
                         {
-                            fprintf(stderr, "++ Got group <%s> <%s>\n", $2,
-                                $4->val.c_str());
                             CircuitGroup* stub = new CircuitGroup(
                                 $2, wireManagers.back());
                             makeGroup(stub,
@@ -113,6 +109,7 @@ group:
                                       $11->yield());
                             wireManagers.pop_back();
                             $$ = stub;
+                            free($2);
                         }
 
 let:
@@ -121,14 +118,19 @@ let:
                         }
 
 identCommaList:
-    IDENT               { $$ = new ListElem<string>($1); }
+    IDENT               {
+                            $$ = new ListElem<string>($1);
+                            free($1);
+                        }
   | IDENT identCommaList
-                        { $$ = new ListElem<string>($1, $2); }
+                        {
+                            $$ = new ListElem<string>($1, $2);
+                            free($1);
+                        }
 
 stmtList:
     stmt                { $$ = $1; }
   | stmt stmtList       {
-                            //$1->append($2);
                             $$ = CircList::concat($1, $2);
                         }
 
@@ -137,6 +139,7 @@ stmt:
                             wireManagers.back()->rename(
                                 $3.outWire->name(), $1);
                             $$ = $3.gates;
+                            free($1);
                         }
   | group               { $$ = new CircList($1); }
 
@@ -245,6 +248,7 @@ expr:
                             $$ = ExprConstruction(
                                 wireManagers.back()->wire($1),
                                 (ListElem<CircuitTree*>*)NULL);
+                            free((char*)$1);
                         }
   | NUMBER              {
                             WireId* outWire = nextWire();
