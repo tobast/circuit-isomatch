@@ -14,6 +14,11 @@ WireId::WireId(size_t id, const std::string& name, WireManager* manager) :
     inner()->manager = manager;
 }
 
+WireId::~WireId() {
+    if(isEndpoint)
+        delete end;
+}
+
 bool WireId::operator==(WireId& oth) {
     return inner()->manager->id() == oth.inner()->manager->id()
         && inner()->id == oth.inner()->id;

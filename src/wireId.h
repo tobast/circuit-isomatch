@@ -37,6 +37,8 @@ class WireId {
 		 */
 		WireId(size_t id, const std::string& name, WireManager* manager);
 
+        ~WireId();
+
 		/** Id-based equality */
 		bool operator==(const WireId& oth) const;
 
