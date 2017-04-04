@@ -5,7 +5,10 @@
 #include <string>
 using namespace std;
 
-CircuitDelay::CircuitDelay(WireId* from, WireId* to) {
+CircuitDelay::CircuitDelay(WireId* from, WireId* to) :
+        wireInput(from), wireOutput(to)
+{
+    assert(from != NULL && to != NULL);
     from->connect(this);
     to->connect(this);
 }

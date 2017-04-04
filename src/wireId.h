@@ -37,15 +37,17 @@ class WireId {
 		 */
 		WireId(size_t id, const std::string& name, WireManager* manager);
 
-		/**
-		 * Id-based equality
-		 */
+		/** Id-based equality */
 		bool operator==(const WireId& oth) const;
 
-		/**
-		 * Id-based comparaison
-		 */
+		/** Id-based equality */
+		bool operator==(WireId& oth);
+
+		/** Id-based comparaison */
 		bool operator<(const WireId& oth) const;
+
+		/** Id-based comparaison */
+		bool operator<(WireId& oth);
 
         /** Connect a circuit to this wire. Should be handled by circuit
          * classes silently.
@@ -60,32 +62,49 @@ class WireId {
         void connect(IOPin* pin, WireId* other);
 
         /** Get the list of circuits connected to that wire. Fast. */
-        const std::vector<CircuitTree*>& connectedCirc() const;
+        const std::vector<CircuitTree*>& connectedCirc();
 
         /** Get the list of wires connected to that wire. Fast. */
-        const std::vector<PinConnection>& connectedPins() const;
+        const std::vector<PinConnection>& connectedPins();
 
         /** Get the list of circuits connected to that wire, possibly through
          * other wires. Must perform a DFS through connected wires and create
          * the list on-the-fly, which might be a bit slow for heavy use. */
-        std::vector<CircuitTree*> connected() const;
+        std::vector<CircuitTree*> connected();
 
         /** Get the name of this wire */
-        const std::string& name() const { return name_; }
+        const std::string& name() { return inner()->name; }
 
         /** Get this wire's display unique name */
-        std::string uniqueName() const;
+        std::string uniqueName();
 
 	private:
+
         void walkConnected(std::unordered_set<CircuitTree*>& curConnected,
                 std::unordered_set<WireId>& seenWires,
-                const WireId* curWire) const;
+                WireId* curWire);
 
-		size_t id;
-		std::string name_;
-        WireManager* manager_;
-        std::vector<CircuitTree*> _connected;
-        std::vector<PinConnection> _connectedPins;
+        struct Inner {
+            size_t id;
+            std::string name;
+            WireManager* manager;
+            std::vector<CircuitTree*> connected;
+            std::vector<PinConnection> connectedPins;
+        };
+
+        void merge(WireId* other);
+        void rename(const std::string& nName) { inner()->name = nName; }
+
+        WireId* ufRoot();
+        inline Inner* inner() { return ufRoot()->end; };
+        const Inner* inner() const;
+
+        union {
+            Inner* end;
+            WireId* chain;
+        };
+        bool isEndpoint;
+        unsigned short ufDepth;
 
     friend WireManager; // set the wire's name
 };
@@ -94,8 +113,8 @@ namespace std {
     template<> struct hash<WireId> {
         typedef WireId argument_type;
         typedef std::size_t result_type;
-        result_type operator()(argument_type const& wire) const {
-            return wire.id;
+        result_type operator()(const argument_type& wire) const {
+            return wire.inner()->id;
         }
     };
 }

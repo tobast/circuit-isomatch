@@ -34,6 +34,8 @@ CircuitGroup::CircuitGroup(const std::string& name, WireManager* manager) :
 {}
 
 CircuitGroup::~CircuitGroup() {
+    for(auto child: grpChildren)
+        delete child;
     delete wireManager_;
 }
 
@@ -103,8 +105,6 @@ const std::vector<IOPin>& CircuitGroup::getOutputs() const {
 
 void CircuitGroup::toDot(std::basic_ostream<char>& out, int indent) {
     const string thisCirc = string("group_") + name + to_string(id());
-
-    out << "<<| " << name << "|>>\n";
 
     if(ancestor() == NULL) {
         // Root group

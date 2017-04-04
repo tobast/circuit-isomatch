@@ -55,11 +55,16 @@ void WireManager::rename(const std::string& curName,
 {
     if(!hasWire(curName))
         throw NotDefined(curName.c_str());
-    if(hasWire(newName))
-        throw AlreadyDefined(newName.c_str());
 
-    WireId* wire = wireByName[curName];
-    wire->name_ = newName;
-    wireByName.erase(curName);
-    wireByName[newName] = wire;
+    WireId* curWire = wireByName[curName];
+    if(hasWire(newName)) {
+        WireId* mergeWith = wire(newName);
+        wireByName.erase(curName);
+        curWire->merge(mergeWith);
+    }
+    else {
+        curWire->rename(newName);
+        wireByName.erase(curName);
+        wireByName[newName] = curWire;
+    }
 }
