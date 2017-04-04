@@ -122,9 +122,9 @@ identCommaList:
                             $$ = new ListElem<string>($1);
                             free($1);
                         }
-  | IDENT identCommaList
+  | IDENT ',' identCommaList
                         {
-                            $$ = new ListElem<string>($1, $2);
+                            $$ = new ListElem<string>($1, $3);
                             free($1);
                         }
 

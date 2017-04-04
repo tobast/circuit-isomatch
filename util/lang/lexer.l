@@ -14,6 +14,8 @@
         yylloc.last_column = yycolumn + yyleng - 1; \
         yycolumn += yyleng;
 
+    extern void yyerror(const char*);
+
     unordered_map<string, yytokentype> keywords = {
         {"AND", OP_AND},
         {"OR", OP_OR},
@@ -36,6 +38,7 @@
         {"TRI", TRISTATE},
         {"let", LET},
     };
+
 %}
 %%
 
@@ -54,4 +57,10 @@
                                 yylval.ival = atoi(yytext);
                                 return NUMBER;
                             }
-[.(){}\->=]                 { return yytext[0]; }
+[,(){}\->=]                 { return yytext[0]; }
+.                           {
+                                char str[100];
+                                sprintf(str, "lexical error: invalid "
+                                    "character %c.", yytext[0]);
+                                yyerror(str);
+                            }
