@@ -108,16 +108,16 @@ class CircuitGroup : public CircuitTree {
         /** Group's inputs, mutable.
          * Requires the group to be unfrozen.
          */
-        std::vector<IOPin>& getInputs();
+        std::vector<IOPin*>& getInputs();
         /** Group's inputs */
-        const std::vector<IOPin>& getInputs() const;
+        const std::vector<IOPin*>& getInputs() const;
 
         /** Group's outputs, mutable.
          * Requires the group to be unfrozen.
          */
-        std::vector<IOPin>& getOutputs();
+        std::vector<IOPin*>& getOutputs();
         /** Group's outputs */
-        const std::vector<IOPin>& getOutputs() const;
+        const std::vector<IOPin*>& getOutputs() const;
 
         /** Group's `WireManager`. */
         WireManager* wireManager() { return wireManager_; }
@@ -137,6 +137,6 @@ class CircuitGroup : public CircuitTree {
         WireManager* wireManager_;
 
         std::vector<CircuitTree*> grpChildren;
-        std::vector<IOPin> grpInputs, grpOutputs;
+        std::vector<IOPin*> grpInputs, grpOutputs;
 };
 

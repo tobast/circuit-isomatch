@@ -36,6 +36,10 @@ CircuitGroup::CircuitGroup(const std::string& name, WireManager* manager) :
 CircuitGroup::~CircuitGroup() {
     for(auto child: grpChildren)
         delete child;
+    for(auto pin: grpInputs)
+        delete pin;
+    for(auto pin: grpOutputs)
+        delete pin;
     delete wireManager_;
 }
 
@@ -52,10 +56,10 @@ void CircuitGroup::addChild(CircuitTree* child) {
     if(child->circType() == CIRC_GROUP) {
         CircuitGroup* grp = static_cast<CircuitGroup*>(child);
         for(auto inp : grp->getInputs()) {
-            inp.connect(wireManager_->wire(inp.formalName()));
+            inp->connect(wireManager_->wire(inp->formalName()));
         }
         for(auto out : grp->getOutputs()) {
-            out.connect(wireManager_->wire(out.formalName()));
+            out->connect(wireManager_->wire(out->formalName()));
         }
     }
     grpChildren.push_back(child);
@@ -63,7 +67,7 @@ void CircuitGroup::addChild(CircuitTree* child) {
 
 void CircuitGroup::addInput(const IOPin& pin) {
     failIfFrozen();
-    grpInputs.push_back(pin);
+    grpInputs.push_back(new IOPin(pin));
 }
 
 void CircuitGroup::addInput(const std::string& formal, WireId* actual) {
@@ -72,7 +76,7 @@ void CircuitGroup::addInput(const std::string& formal, WireId* actual) {
 
 void CircuitGroup::addOutput(const IOPin& pin) {
     failIfFrozen();
-    grpOutputs.push_back(pin);
+    grpOutputs.push_back(new IOPin(pin));
 }
 
 void CircuitGroup::addOutput(const std::string& formal, WireId* actual) {
@@ -87,19 +91,19 @@ const std::vector<CircuitTree*>& CircuitGroup::getChildren() const {
     return grpChildren;
 }
 
-std::vector<IOPin>& CircuitGroup::getInputs() {
+std::vector<IOPin*>& CircuitGroup::getInputs() {
     failIfFrozen();
     return grpInputs;
 }
-const std::vector<IOPin>& CircuitGroup::getInputs() const {
+const std::vector<IOPin*>& CircuitGroup::getInputs() const {
     return grpInputs;
 }
 
-std::vector<IOPin>& CircuitGroup::getOutputs() {
+std::vector<IOPin*>& CircuitGroup::getOutputs() {
     failIfFrozen();
     return grpOutputs;
 }
-const std::vector<IOPin>& CircuitGroup::getOutputs() const {
+const std::vector<IOPin*>& CircuitGroup::getOutputs() const {
     return grpOutputs;
 }
 
@@ -117,31 +121,35 @@ void CircuitGroup::toDot(std::basic_ostream<char>& out, int indent) {
     }
     indent += 2;
     dotPrint::indent(out, indent)
-        << "graph[style=filled, label=\"" << name << "\"]\n";
+        << "graph[style=filled, splines=curved, label=\"" << name << "\"]\n";
 
     // Wires
     for(auto wire : wireManager()->wires()) {
         dotPrint::indent(out, indent)
-            << wire->uniqueName() << " [shape=plaintext]"
+            << wire->uniqueName()
+            << " [shape=plain, label="
+            << wire->uniqueName()
+            << "]"
             << '\n';
     }
 
     // IO pins
     for(auto inPin : grpInputs) {
-        if(inPin.formal() != NULL)
+        if(inPin->formal() != NULL) {
             dotPrint::indent(out, indent)
-                << inPin.actual()->uniqueName()
+                << inPin->actual()->uniqueName()
                 << " -> "
-                << inPin.formal()->uniqueName()
+                << inPin->formal()->uniqueName()
                 << " [arrowhead=none]"
                 << '\n';
+        }
     }
     for(auto outPin : grpOutputs) {
-        if(outPin.formal() != NULL)
+        if(outPin->formal() != NULL)
             dotPrint::indent(out, indent)
-                << outPin.actual()->uniqueName()
+                << outPin->actual()->uniqueName()
                 << " -> "
-                << outPin.formal()->uniqueName()
+                << outPin->formal()->uniqueName()
                 << " [arrowhead=none]"
                 << '\n';
     }
