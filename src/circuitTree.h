@@ -1,10 +1,40 @@
 #pragma once
 #include <exception>
 #include <ostream>
+#include <iterator>
+#include <typeinfo>
 
 #include "wireId.h"
 
 class CircuitTree {
+    protected:
+        /** Inner `ConstIoIter`, to be reimplemented in derived classes. */
+        class InnerConstIoIter :
+            public std::iterator<std::forward_iterator_tag, WireId*>
+        {
+            public:
+                virtual ~InnerConstIoIter() {};
+                virtual void operator++() {};
+                bool operator==(InnerConstIoIter& oth) {
+                    return typeid(*this) == typeid(oth) && equal(oth);
+                }
+                bool operator!=(InnerConstIoIter& oth) {
+                    return !(operator==(oth));
+                }
+                virtual const WireId* operator*() { return nullptr; }
+                virtual InnerConstIoIter* clone() const {
+                    return new InnerConstIoIter(*this);
+                }
+            protected:
+                /** Checks for equality with its parameter. It can be assumed
+                 * that this parameter is of the same type as `*this`, even in
+                 * subclassed iterators.
+                 */
+                virtual bool equal(const InnerConstIoIter&) const {
+                    return true;
+                }
+        };
+
     public:
         typedef unsigned long long sig_t;
 
@@ -26,6 +56,36 @@ class CircuitTree {
             CIRC_DELAY,
             CIRC_TRI,
             CIRC_ASSERT,
+        };
+
+        /** Iterator over the WireIds of the diverse circuit gates */
+        class ConstIoIter {
+            public:
+                ConstIoIter() : inner(nullptr) {}
+                ConstIoIter(InnerConstIoIter* ptr) : inner(ptr) {}
+                ~ConstIoIter() { delete inner; }
+
+                ConstIoIter(const ConstIoIter& oth) :
+                    inner(oth.inner->clone()) {}
+                ConstIoIter& operator=(const ConstIoIter& oth) {
+                    delete inner;
+                    inner = oth.inner->clone();
+                    return *this;
+                }
+
+                ConstIoIter& operator++() {
+                    ++(*inner);
+                    return *this;
+                }
+                ConstIoIter operator++(int) {
+                    ConstIoIter out(*this);
+                    operator++();
+                    return out;
+                }
+                const WireId* operator*() const { return *(*inner); }
+
+            private:
+                InnerConstIoIter* inner;
         };
 
         CircuitTree();
@@ -67,6 +127,24 @@ class CircuitTree {
 
         /** Get this circuit's id */
         size_t id() const { return circuitId; }
+
+        /** Get an iterator to the first input wire */
+        virtual ConstIoIter inp_begin() const = 0;
+
+        /** Get an iterator to the end of input wires */
+        ConstIoIter inp_end() const { return out_begin(); }
+
+        /** Get an iterator to the first output wire */
+        virtual ConstIoIter out_begin() const = 0;
+
+        /** Get an iterator to the end of output wires */
+        virtual ConstIoIter out_end() const = 0;
+
+        /** Get an iterator to the first I/O wire */
+        ConstIoIter io_begin() const { return inp_begin(); }
+
+        /** Get an iterator to the end of output wires */
+        ConstIoIter io_end() const { return out_end(); }
 
         /** Generates a Dot representation of the circuit, primarily intended
          * for debugging. */

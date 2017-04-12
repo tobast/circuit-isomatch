@@ -5,6 +5,14 @@
 #include <string>
 using namespace std;
 
+
+void CircuitDelay::InnerConstIoIter::operator++() {
+    if(ptr == circ->wireInput)
+        ptr = circ->wireOutput;
+    if(ptr == circ->wireOutput)
+        ptr = NULL;
+}
+
 CircuitDelay::CircuitDelay(WireId* from, WireId* to) :
         wireInput(from), wireOutput(to)
 {

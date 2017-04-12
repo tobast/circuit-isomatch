@@ -38,7 +38,46 @@ class IOPin {
 
 
 class CircuitGroup : public CircuitTree {
+    protected:
+        // ========= I/O ITERATOR =============================================
+        class InnerConstIoIter : public CircuitTree::InnerConstIoIter {
+                typedef std::vector<IOPin*>::const_iterator LowIter;
+                LowIter ptr;
+                const CircuitGroup* circ;
+            public:
+                InnerConstIoIter(const CircuitGroup* circ, LowIter lowIter)
+                    : ptr(lowIter), circ(circ) {}
+                InnerConstIoIter(const InnerConstIoIter& it)
+                    : ptr(it.ptr) {}
+                virtual void operator++();
+                virtual const WireId* operator*() { return (*ptr)->formal(); }
+                virtual InnerConstIoIter* clone() const {
+                    return new InnerConstIoIter(*this);
+                }
+            protected:
+                virtual bool equal(const InnerConstIoIter& oth) const {
+                    return ptr == oth.ptr && circ == oth.circ;
+                }
+        };
+
     public:
+        ConstIoIter inp_begin() const {
+            return ConstIoIter(
+                    new InnerConstIoIter(this, grpInputs.begin())
+                    );
+        }
+        ConstIoIter out_begin() const {
+            return ConstIoIter(
+                    new InnerConstIoIter(this, grpOutputs.begin())
+                    );
+        }
+        ConstIoIter io_end() const {
+            return ConstIoIter(
+                    new InnerConstIoIter(this, grpOutputs.end())
+                    );
+        }
+        // ========= END I/O ITERATOR =========================================
+
         /** Create a `CircuitGroup` with a given `name`. Its internal
          * `WireManager` is automatically created.
          */

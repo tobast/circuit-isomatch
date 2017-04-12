@@ -4,6 +4,12 @@
 #include <cassert>
 using namespace std;
 
+void CircuitComb::InnerConstIoIter::operator++() {
+    ++ptr;
+    if(ptr == circ->gateInputs.end())
+        ptr = circ->gateOutputs.begin();
+}
+
 CircuitComb::CircuitComb()
 {}
 

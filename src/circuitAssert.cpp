@@ -6,6 +6,10 @@
 
 using namespace std;
 
+void CircuitAssert::InnerConstIoIter::operator++() {
+    ++ptr;
+}
+
 CircuitAssert::CircuitAssert(const std::string& name,
         const ExpressionBase& expr) :
     name(name), gateExpr(expr)

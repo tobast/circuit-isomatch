@@ -5,6 +5,15 @@
 #include <cassert>
 using namespace std;
 
+void CircuitTristate::InnerConstIoIter::operator++() {
+    if(ptr == circ->wireInput)
+        ptr = circ->wireEnable;
+    else if(ptr == circ->wireEnable)
+        ptr = circ->wireOutput;
+    else if(ptr == circ->wireOutput)
+        ptr = NULL;
+}
+
 CircuitTristate::CircuitTristate(WireId* from, WireId* to, WireId* enable) :
     wireInput(from), wireOutput(to), wireEnable(enable)
 {

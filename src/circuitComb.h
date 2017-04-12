@@ -4,7 +4,46 @@
 #include "gateExpression.h"
 
 class CircuitComb : public CircuitTree {
+    protected:
+        // ========= I/O ITERATOR =============================================
+        class InnerConstIoIter : public CircuitTree::InnerConstIoIter {
+                typedef std::vector<WireId*>::const_iterator LowIter;
+                LowIter ptr;
+                const CircuitComb* circ;
+            public:
+                InnerConstIoIter(const CircuitComb* circ, LowIter lowIter)
+                    : ptr(lowIter), circ(circ) {}
+                InnerConstIoIter(const InnerConstIoIter& it)
+                    : ptr(it.ptr) {}
+                virtual void operator++();
+                virtual const WireId* operator*() { return *ptr; }
+                virtual InnerConstIoIter* clone() const {
+                    return new InnerConstIoIter(*this);
+                }
+            protected:
+                virtual bool equal(const InnerConstIoIter& oth) const {
+                    return circ == oth.circ && ptr == oth.ptr;
+                }
+        };
+
     public:
+        ConstIoIter inp_begin() const {
+            return ConstIoIter(
+                    new InnerConstIoIter(this, gateInputs.begin())
+                    );
+        }
+        ConstIoIter out_begin() const {
+            return ConstIoIter(
+                    new InnerConstIoIter(this, gateOutputs.begin())
+                    );
+        }
+        ConstIoIter io_end() const {
+            return ConstIoIter(
+                    new InnerConstIoIter(this, gateOutputs.end())
+                    );
+        }
+        // ========= END I/O ITERATOR =========================================
+
         CircuitComb();
 
         CircType circType() const { return CIRC_COMB; }

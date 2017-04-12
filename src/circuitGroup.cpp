@@ -23,6 +23,12 @@ void IOPin::connect(WireId* formal) {
     formal->connect(this, _actual);
 }
 
+void CircuitGroup::InnerConstIoIter::operator++() {
+    ++ptr;
+    if(ptr == circ->grpInputs.end())
+        ptr = circ->grpOutputs.begin();
+}
+
 CircuitGroup::CircuitGroup(const std::string& name) :
     CircuitTree(), name(name)
 {
