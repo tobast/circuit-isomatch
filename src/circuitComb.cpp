@@ -4,7 +4,7 @@
 #include <cassert>
 using namespace std;
 
-void CircuitComb::InnerConstIoIter::operator++() {
+void CircuitComb::InnerIoIter::operator++() {
     ++ptr;
     if(ptr == circ->gateInputs.end())
         ptr = circ->gateOutputs.begin();

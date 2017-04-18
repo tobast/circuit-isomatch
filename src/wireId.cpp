@@ -6,6 +6,26 @@
 #include <sstream>
 using namespace std;
 
+WireId::CircIterator& WireId::CircIterator::operator++() {
+    if(isCircIter) {
+        ++circIter;
+        if(circIter == parent->inner()->connected.end()) {
+            isCircIter = false;
+            pinIter = parent->inner()->connectedPins.begin();
+        }
+    }
+    else
+        ++pinIter;
+
+    return *this;
+}
+
+CircuitTree* WireId::CircIterator::operator*() const {
+    if(isCircIter)
+        return *circIter;
+    return pinIter->pin->group();
+}
+
 WireId::WireId(size_t id, const std::string& name, WireManager* manager) :
     end(new Inner), isEndpoint(true), ufDepth(0)
 {
@@ -59,6 +79,14 @@ const std::vector<CircuitTree*>& WireId::connectedCirc() {
 
 const std::vector<WireId::PinConnection>& WireId::connectedPins() {
     return inner()->connectedPins;
+}
+
+WireId::CircIterator WireId::adjacent_begin() {
+    return CircIterator(inner()->connected.begin(), this);
+}
+
+WireId::CircIterator WireId::adjacent_end() {
+    return CircIterator(inner()->connectedPins.end(), this);
 }
 
 std::vector<CircuitTree*> WireId::connected() {

@@ -16,7 +16,8 @@ OBJS = \
 	   circuitTristate.o \
 	   circuitDelay.o \
 	   circuitAssert.o \
-	   circuitComb.o
+	   circuitComb.o \
+	   signatureConstants.o
 
 ###############################################################################
 

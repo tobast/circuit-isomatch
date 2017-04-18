@@ -6,7 +6,7 @@
 
 using namespace std;
 
-void CircuitAssert::InnerConstIoIter::operator++() {
+void CircuitAssert::InnerIoIter::operator++() {
     ++ptr;
 }
 

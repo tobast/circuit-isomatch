@@ -6,7 +6,7 @@
 using namespace std;
 
 
-void CircuitDelay::InnerConstIoIter::operator++() {
+void CircuitDelay::InnerIoIter::operator++() {
     if(ptr == circ->wireInput)
         ptr = circ->wireOutput;
     if(ptr == circ->wireOutput)

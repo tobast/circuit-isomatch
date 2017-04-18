@@ -9,28 +9,28 @@
 class CircuitTree {
     protected:
         /** Inner `ConstIoIter`, to be reimplemented in derived classes. */
-        class InnerConstIoIter :
+        class InnerIoIter :
             public std::iterator<std::forward_iterator_tag, WireId*>
         {
             public:
-                virtual ~InnerConstIoIter() {};
+                virtual ~InnerIoIter() {};
                 virtual void operator++() {};
-                bool operator==(InnerConstIoIter& oth) {
+                bool operator==(InnerIoIter& oth) {
                     return typeid(*this) == typeid(oth) && equal(oth);
                 }
-                bool operator!=(InnerConstIoIter& oth) {
+                bool operator!=(InnerIoIter& oth) {
                     return !(operator==(oth));
                 }
-                virtual const WireId* operator*() { return nullptr; }
-                virtual InnerConstIoIter* clone() const {
-                    return new InnerConstIoIter(*this);
+                virtual WireId* operator*() { return nullptr; }
+                virtual InnerIoIter* clone() const {
+                    return new InnerIoIter(*this);
                 }
             protected:
                 /** Checks for equality with its parameter. It can be assumed
                  * that this parameter is of the same type as `*this`, even in
                  * subclassed iterators.
                  */
-                virtual bool equal(const InnerConstIoIter&) const {
+                virtual bool equal(const InnerIoIter&) const {
                     return true;
                 }
         };
@@ -59,33 +59,41 @@ class CircuitTree {
         };
 
         /** Iterator over the WireIds of the diverse circuit gates */
-        class ConstIoIter {
+        class IoIter {
             public:
-                ConstIoIter() : inner(nullptr) {}
-                ConstIoIter(InnerConstIoIter* ptr) : inner(ptr) {}
-                ~ConstIoIter() { delete inner; }
+                IoIter() : inner(nullptr) {}
+                IoIter(InnerIoIter* ptr) : inner(ptr) {}
+                ~IoIter() { delete inner; }
 
-                ConstIoIter(const ConstIoIter& oth) :
+                IoIter(const IoIter& oth) :
                     inner(oth.inner->clone()) {}
-                ConstIoIter& operator=(const ConstIoIter& oth) {
+                IoIter& operator=(const IoIter& oth) {
                     delete inner;
                     inner = oth.inner->clone();
                     return *this;
                 }
 
-                ConstIoIter& operator++() {
+                IoIter& operator++() {
                     ++(*inner);
                     return *this;
                 }
-                ConstIoIter operator++(int) {
-                    ConstIoIter out(*this);
+                IoIter operator++(int) {
+                    IoIter out(*this);
                     operator++();
                     return out;
                 }
-                const WireId* operator*() const { return *(*inner); }
+                WireId* operator*() const { return *(*inner); }
+
+                bool operator==(const IoIter& oth) const {
+                    return operator*() == *oth;
+                }
+
+                bool operator!=(const IoIter& oth) const {
+                    return operator*() != *oth;
+                }
 
             private:
-                InnerConstIoIter* inner;
+                InnerIoIter* inner;
         };
 
         CircuitTree();
@@ -129,22 +137,22 @@ class CircuitTree {
         size_t id() const { return circuitId; }
 
         /** Get an iterator to the first input wire */
-        virtual ConstIoIter inp_begin() const = 0;
+        virtual IoIter inp_begin() const = 0;
 
         /** Get an iterator to the end of input wires */
-        ConstIoIter inp_end() const { return out_begin(); }
+        IoIter inp_end() const { return out_begin(); }
 
         /** Get an iterator to the first output wire */
-        virtual ConstIoIter out_begin() const = 0;
+        virtual IoIter out_begin() const = 0;
 
         /** Get an iterator to the end of output wires */
-        virtual ConstIoIter out_end() const = 0;
+        virtual IoIter out_end() const = 0;
 
         /** Get an iterator to the first I/O wire */
-        ConstIoIter io_begin() const { return inp_begin(); }
+        IoIter io_begin() const { return inp_begin(); }
 
         /** Get an iterator to the end of output wires */
-        ConstIoIter io_end() const { return out_end(); }
+        IoIter io_end() const { return out_end(); }
 
         /** Generates a Dot representation of the circuit, primarily intended
          * for debugging. */
@@ -155,7 +163,11 @@ class CircuitTree {
          * previously memoized.
          * You should call `sign` when overriding this function and needing a
          * lower-level signature of a block. */
-        virtual sig_t computeSignature(int level) = 0;
+        virtual sig_t computeSignature(int level);
+
+        /** Computes the inner signature of a gate. This should be
+         * reimplemented for every gate type. */
+        virtual sig_t innerSignature() const = 0;
 
         /**
          * Checks whether the circuit is frozen, and fails with `Frozen` if it

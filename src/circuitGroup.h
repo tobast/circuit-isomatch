@@ -40,40 +40,40 @@ class IOPin {
 class CircuitGroup : public CircuitTree {
     protected:
         // ========= I/O ITERATOR =============================================
-        class InnerConstIoIter : public CircuitTree::InnerConstIoIter {
+        class InnerIoIter : public CircuitTree::InnerIoIter {
                 typedef std::vector<IOPin*>::const_iterator LowIter;
                 LowIter ptr;
                 const CircuitGroup* circ;
             public:
-                InnerConstIoIter(const CircuitGroup* circ, LowIter lowIter)
+                InnerIoIter(const CircuitGroup* circ, LowIter lowIter)
                     : ptr(lowIter), circ(circ) {}
-                InnerConstIoIter(const InnerConstIoIter& it)
+                InnerIoIter(const InnerIoIter& it)
                     : ptr(it.ptr) {}
                 virtual void operator++();
-                virtual const WireId* operator*() { return (*ptr)->formal(); }
-                virtual InnerConstIoIter* clone() const {
-                    return new InnerConstIoIter(*this);
+                virtual WireId* operator*() { return (*ptr)->formal(); }
+                virtual InnerIoIter* clone() const {
+                    return new InnerIoIter(*this);
                 }
             protected:
-                virtual bool equal(const InnerConstIoIter& oth) const {
+                virtual bool equal(const InnerIoIter& oth) const {
                     return ptr == oth.ptr && circ == oth.circ;
                 }
         };
 
     public:
-        ConstIoIter inp_begin() const {
-            return ConstIoIter(
-                    new InnerConstIoIter(this, grpInputs.begin())
+        IoIter inp_begin() const {
+            return IoIter(
+                    new InnerIoIter(this, grpInputs.begin())
                     );
         }
-        ConstIoIter out_begin() const {
-            return ConstIoIter(
-                    new InnerConstIoIter(this, grpOutputs.begin())
+        IoIter out_begin() const {
+            return IoIter(
+                    new InnerIoIter(this, grpOutputs.begin())
                     );
         }
-        ConstIoIter io_end() const {
-            return ConstIoIter(
-                    new InnerConstIoIter(this, grpOutputs.end())
+        IoIter io_end() const {
+            return IoIter(
+                    new InnerIoIter(this, grpOutputs.end())
                     );
         }
         // ========= END I/O ITERATOR =========================================
@@ -158,6 +158,12 @@ class CircuitGroup : public CircuitTree {
         /** Group's outputs */
         const std::vector<IOPin*>& getOutputs() const;
 
+        /** Returns the I/O signature of a belonging to this group, that is, a
+         * signature encompassing how this particular wire is connected to the
+         * I/O pins of this group.
+         * Requires the group to be frozen. */
+        CircuitTree::sig_t ioSigOf(WireId* id) const;
+
         /** Group's `WireManager`. */
         WireManager* wireManager() { return wireManager_; }
         // Note: this cannot be `const`, since the `wireManager_` is muted
@@ -167,6 +173,7 @@ class CircuitGroup : public CircuitTree {
 
     protected:
         sig_t computeSignature(int level);
+        void computeIoSigs();
 
     private:
         void setAncestor(CircuitTree* tree) const;
@@ -177,5 +184,6 @@ class CircuitGroup : public CircuitTree {
 
         std::vector<CircuitTree*> grpChildren;
         std::vector<IOPin*> grpInputs, grpOutputs;
+        std::unordered_map<WireId, CircuitTree::sig_t> ioSigs_;
 };
 

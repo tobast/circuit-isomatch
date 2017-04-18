@@ -5,39 +5,39 @@
 class CircuitTristate : public CircuitTree {
     protected:
         // ========= I/O ITERATOR =============================================
-        class InnerConstIoIter : public CircuitTree::InnerConstIoIter {
+        class InnerIoIter : public CircuitTree::InnerIoIter {
                 WireId* ptr;
                 const CircuitTristate* circ;
             public:
-                InnerConstIoIter(const CircuitTristate* circ, WireId* wire)
+                InnerIoIter(const CircuitTristate* circ, WireId* wire)
                     : ptr(wire), circ(circ) {}
-                InnerConstIoIter(const InnerConstIoIter& it)
+                InnerIoIter(const InnerIoIter& it)
                     : ptr(it.ptr), circ(it.circ) {}
                 virtual void operator++();
-                virtual const WireId* operator*() { return ptr; }
-                virtual InnerConstIoIter* clone() const {
-                    return new InnerConstIoIter(*this);
+                virtual WireId* operator*() { return ptr; }
+                virtual InnerIoIter* clone() const {
+                    return new InnerIoIter(*this);
                 }
             private:
-                virtual bool equal(const InnerConstIoIter& oth) const {
+                virtual bool equal(const InnerIoIter& oth) const {
                     return ptr == oth.ptr && circ == oth.circ;
                 }
         };
 
     public:
-        ConstIoIter inp_begin() const {
-            return ConstIoIter(
-                    new InnerConstIoIter(this, wireInput)
+        IoIter inp_begin() const {
+            return IoIter(
+                    new InnerIoIter(this, wireInput)
                     );
         }
-        ConstIoIter out_begin() const {
-            return ConstIoIter(
-                    new InnerConstIoIter(this, wireOutput)
+        IoIter out_begin() const {
+            return IoIter(
+                    new InnerIoIter(this, wireOutput)
                     );
         }
-        ConstIoIter io_end() const {
-            return ConstIoIter(
-                    new InnerConstIoIter(this, NULL)
+        IoIter io_end() const {
+            return IoIter(
+                    new InnerIoIter(this, NULL)
                     );
         }
         // ========= END I/O ITERATOR =========================================

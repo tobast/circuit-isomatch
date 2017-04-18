@@ -8,37 +8,37 @@
 class CircuitAssert : public CircuitTree {
     protected:
         // ========= I/O ITERATOR =============================================
-        class InnerConstIoIter : public CircuitTree::InnerConstIoIter {
+        class InnerIoIter : public CircuitTree::InnerIoIter {
                 typedef std::vector<WireId*>::const_iterator LowIter;
                 LowIter ptr;
             public:
-                InnerConstIoIter(LowIter lowIter) : ptr(lowIter) {}
-                InnerConstIoIter(const InnerConstIoIter& it)
+                InnerIoIter(LowIter lowIter) : ptr(lowIter) {}
+                InnerIoIter(const InnerIoIter& it)
                     : ptr(it.ptr) {}
                 virtual void operator++();
-                virtual const WireId* operator*() { return *ptr; }
-                virtual InnerConstIoIter* clone() const {
-                    return new InnerConstIoIter(*this);
+                virtual WireId* operator*() { return *ptr; }
+                virtual InnerIoIter* clone() const {
+                    return new InnerIoIter(*this);
                 }
 
             protected:
-                virtual bool equal(const InnerConstIoIter& oth) const {
+                virtual bool equal(const InnerIoIter& oth) const {
                     return ptr == oth.ptr;
                 }
         };
 
     public:
-        ConstIoIter inp_begin() const {
-            return ConstIoIter(
-                    new InnerConstIoIter(gateInputs.begin())
+        IoIter inp_begin() const {
+            return IoIter(
+                    new InnerIoIter(gateInputs.begin())
                     );
         }
-        ConstIoIter out_begin() const {
-            return ConstIoIter(
-                    new InnerConstIoIter(gateInputs.end())
+        IoIter out_begin() const {
+            return IoIter(
+                    new InnerIoIter(gateInputs.end())
                     );
         }
-        ConstIoIter io_end() const {
+        IoIter io_end() const {
             return out_begin();
         }
         // ========= END I/O ITERATOR =========================================

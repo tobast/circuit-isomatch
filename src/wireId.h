@@ -28,6 +28,51 @@ class WireId {
             WireId* other;
         };
 
+        class CircIterator {
+            typedef std::vector<CircuitTree*>::iterator CircIter;
+            typedef std::vector<PinConnection>::iterator PinIter;
+
+            public:
+                CircIterator(const CircIter& iter, WireId* parent) :
+                    circIter(iter), isCircIter(true), parent(parent) {}
+                CircIterator(const PinIter& iter, WireId* parent) :
+                    pinIter(iter), isCircIter(false), parent(parent) {}
+
+                CircIterator(const CircIterator& oth) {
+                    operator=(oth);
+                }
+                void operator=(const CircIterator& oth) {
+                    isCircIter = oth.isCircIter;
+                    if(isCircIter)
+                        circIter = oth.circIter;
+                    else
+                        pinIter = oth.pinIter;
+                }
+
+                CircIterator& operator++();
+
+                CircuitTree* operator*() const;
+
+                bool operator==(const CircIterator& oth) const {
+                    return parent == oth.parent &&
+                        isCircIter == oth.isCircIter &&
+                        ((isCircIter && circIter == oth.circIter)
+                         || (!isCircIter && pinIter == oth.pinIter));
+                }
+                bool operator!=(const CircIterator& oth) const {
+                    return !operator==(oth);
+                }
+
+
+            private:
+                union {
+                    CircIter circIter;
+                    PinIter pinIter;
+                };
+                bool isCircIter;
+                WireId* parent;
+        };
+
 		/**
 		 * Basic constructor
 		 *
@@ -68,6 +113,20 @@ class WireId {
 
         /** Get the list of wires connected to that wire. Fast. */
         const std::vector<PinConnection>& connectedPins();
+
+        /** Get an iterator to the first adjacent circuit. Adjacent circuits
+         * are the circuits directly connected to this wire. Groups connected
+         * to this wire are considered (instead of considering the actual leaf
+         * the wire is connected to inside this group).
+         *
+         * **NOTE**: the behaviour of this iterator is undefined when the
+         * parent `WireId` is altered during the iteration. This includes
+         * connecting more gates, merging this wire, … */
+        CircIterator adjacent_begin();
+
+        /** Get a past-the-end iterator to adjacent circuits for this group.
+         * See `adjacent_begin`.  */
+        CircIterator adjacent_end();
 
         /** Get the list of circuits connected to that wire, possibly through
          * other wires. Must perform a DFS through connected wires and create

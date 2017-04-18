@@ -5,7 +5,7 @@
 #include <cassert>
 using namespace std;
 
-void CircuitTristate::InnerConstIoIter::operator++() {
+void CircuitTristate::InnerIoIter::operator++() {
     if(ptr == circ->wireInput)
         ptr = circ->wireEnable;
     else if(ptr == circ->wireEnable)

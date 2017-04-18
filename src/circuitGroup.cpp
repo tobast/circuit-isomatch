@@ -1,6 +1,8 @@
 #include "circuitGroup.h"
 #include "dotPrint.h"
+#include "signatureConstants.h"
 #include <cassert>
+#include <cstdint>
 
 using namespace std;
 
@@ -23,7 +25,7 @@ void IOPin::connect(WireId* formal) {
     formal->connect(this, _actual);
 }
 
-void CircuitGroup::InnerConstIoIter::operator++() {
+void CircuitGroup::InnerIoIter::operator++() {
     ++ptr;
     if(ptr == circ->grpInputs.end())
         ptr = circ->grpOutputs.begin();
@@ -53,6 +55,8 @@ void CircuitGroup::freeze() {
     for(auto child: grpChildren)
         child->freeze();
     CircuitTree::freeze();
+
+    computeIoSigs();
 }
 
 void CircuitGroup::addChild(CircuitTree* child) {
@@ -169,8 +173,59 @@ void CircuitGroup::toDot(std::basic_ostream<char>& out, int indent) {
         << "}\n";
 }
 
+CircuitTree::sig_t CircuitGroup::ioSigOf(WireId* wire) const {
+    failIfNotFrozen();
+    try {
+        return ioSigs_.at(*wire);
+    }
+    catch(const std::out_of_range& e) {
+        return 0;
+    }
+}
+
 CircuitGroup::sig_t CircuitGroup::computeSignature(int level) {
     (&level); // UNUSED
     assert(false); // TODO implement
 }
 
+/** Computes (base ** exp) % mod through quick exponentiation */
+static uint64_t expmod(uint64_t base, uint64_t exp, uint64_t mod) {
+    if(exp <= 1)
+        return (exp == 1) ? base : 1;
+    uint64_t out = expmod((base * base) % mod, exp / 2, mod);
+    return (mod & 1) ? ((out * base) % mod) : out;
+}
+
+/** Computes the I/O signature of a single wire, given the I/O pins it is
+ * connected to. */
+static CircuitTree::sig_t ioSigOfSet(const unordered_set<size_t>& set) {
+    static const uint32_t pinMod = signatureConstants::pinIdMod;
+    auto valSig = [](size_t val) { return expmod(2, val, pinMod); };
+
+    CircuitTree::sig_t out = 0;
+    for(auto& val : set)
+        out = (out + valSig(val)) % pinMod;
+    return out;
+}
+
+void CircuitGroup::computeIoSigs() {
+    unordered_map<WireId, unordered_set<size_t> > inpPinsForWire;
+    unordered_map<WireId, unordered_set<size_t> > outPinsForWire;
+
+    for(size_t inpId = 0; inpId < grpInputs.size(); ++inpId) {
+        IOPin* pin = grpInputs[inpId];
+        auto& wireSet = inpPinsForWire[*(pin->actual())];
+        wireSet.insert(inpId);
+    }
+    for(size_t outId = 0; outId < grpOutputs.size(); ++outId) {
+        IOPin* pin = grpInputs[outId];
+        auto& wireSet = outPinsForWire[*(pin->actual())];
+        wireSet.insert(outId);
+    }
+
+    for(auto& entry : inpPinsForWire)
+        ioSigs_[entry.first] = ioSigOfSet(entry.second);
+    for(auto& entry : outPinsForWire)
+        ioSigs_[entry.first] += (ioSigOfSet(entry.second) << 32);
+    // FIXME ough to mix up a bit the two parts.
+}
