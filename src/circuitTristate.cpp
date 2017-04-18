@@ -1,4 +1,5 @@
 #include "circuitTristate.h"
+#include "signatureConstants.h"
 #include "dotPrint.h"
 
 #include <string>
@@ -23,7 +24,8 @@ CircuitTristate::CircuitTristate(WireId* from, WireId* to, WireId* enable) :
 }
 
 CircuitTristate::sig_t CircuitTristate::innerSignature() const {
-    assert(false); // TODO implement
+    return signatureConstants::opcst_leaftype(
+            (circType() << 16) + (1 << 8) + 1);
 }
 
 void CircuitTristate::toDot(std::basic_ostream<char>& out, int indent) {

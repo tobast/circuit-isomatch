@@ -1,4 +1,5 @@
 #include "circuitDelay.h"
+#include "signatureConstants.h"
 #include "dotPrint.h"
 
 #include <cassert>
@@ -22,7 +23,8 @@ CircuitDelay::CircuitDelay(WireId* from, WireId* to) :
 }
 
 CircuitDelay::sig_t CircuitDelay::innerSignature() const {
-    assert(false); // TODO implement
+    return signatureConstants::opcst_leaftype(
+            (circType() << 16) + (1 << 8) + 1);
 }
 
 void CircuitDelay::toDot(std::basic_ostream<char>& out, int indent) {
