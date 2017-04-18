@@ -20,8 +20,7 @@ void CircuitAssert::addInput(WireId* wire) {
     gateInputs.push_back(wire);
 }
 
-CircuitAssert::sig_t CircuitAssert::computeSignature(int level) {
-    (&level); // UNUSED
+CircuitAssert::sig_t CircuitAssert::innerSignature() const {
     assert(false); //TODO implement
 }
 

@@ -72,7 +72,7 @@ class CircuitComb : public CircuitTree {
         void toDot(std::ostream& out, int indent=0);
 
     protected:
-        sig_t computeSignature(int level);
+        virtual sig_t innerSignature() const;
 
     private:
         std::vector<WireId*> gateInputs, gateOutputs;

@@ -21,8 +21,7 @@ CircuitDelay::CircuitDelay(WireId* from, WireId* to) :
     to->connect(this);
 }
 
-CircuitDelay::sig_t CircuitDelay::computeSignature(int level) {
-    (&level); // UNUSED
+CircuitDelay::sig_t CircuitDelay::innerSignature() const {
     assert(false); // TODO implement
 }
 

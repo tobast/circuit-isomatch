@@ -24,8 +24,7 @@ void CircuitComb::addOutput(const ExpressionBase& expr, WireId* wire) {
     gateExprs.push_back(expr);
 }
 
-CircuitComb::sig_t CircuitComb::computeSignature(int level) {
-    (&level); // UNUSED
+CircuitComb::sig_t CircuitComb::innerSignature() const {
     assert(false); // TODO implement
 }
 

@@ -22,8 +22,7 @@ CircuitTristate::CircuitTristate(WireId* from, WireId* to, WireId* enable) :
     enable->connect(this);
 }
 
-CircuitTristate::sig_t CircuitTristate::computeSignature(int level) {
-    (&level); // UNUSED
+CircuitTristate::sig_t CircuitTristate::innerSignature() const {
     assert(false); // TODO implement
 }
 

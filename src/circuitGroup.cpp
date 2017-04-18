@@ -183,8 +183,7 @@ CircuitTree::sig_t CircuitGroup::ioSigOf(WireId* wire) const {
     }
 }
 
-CircuitGroup::sig_t CircuitGroup::computeSignature(int level) {
-    (&level); // UNUSED
+CircuitGroup::sig_t CircuitGroup::innerSignature() const {
     assert(false); // TODO implement
 }
 

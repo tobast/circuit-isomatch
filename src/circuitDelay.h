@@ -55,7 +55,7 @@ class CircuitDelay : public CircuitTree {
         void toDot(std::basic_ostream<char>& out, int indent=0);
 
     protected:
-        sig_t computeSignature(int level);
+        virtual sig_t innerSignature() const;
 
     private:
         WireId *wireInput, *wireOutput;
