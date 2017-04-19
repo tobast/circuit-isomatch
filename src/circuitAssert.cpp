@@ -12,9 +12,13 @@ void CircuitAssert::InnerIoIter::operator++() {
 }
 
 CircuitAssert::CircuitAssert(const std::string& name,
-        const ExpressionBase& expr) :
+        ExpressionBase* expr) :
     name(name), gateExpr(expr)
 {}
+
+CircuitAssert::~CircuitAssert() {
+    delete gateExpr;
+}
 
 void CircuitAssert::addInput(WireId* wire) {
     failIfFrozen();

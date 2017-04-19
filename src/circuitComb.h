@@ -45,6 +45,7 @@ class CircuitComb : public CircuitTree {
         // ========= END I/O ITERATOR =========================================
 
         CircuitComb();
+        virtual ~CircuitComb();
 
         CircType circType() const { return CIRC_COMB; }
 
@@ -53,10 +54,11 @@ class CircuitComb : public CircuitTree {
          */
         void addInput(WireId* wire);
 
-        /** Adds `expr` as the expression for the next output wire, `out`.
+        /** Adds `expr` as the expression for the next output wire, `out`. The
+         * expression `expr` will be `delete`d by this object's destructor.
          * Requires the gate to be unfrozen.
          */
-        void addOutput(const ExpressionBase& expr, WireId* wire);
+        void addOutput(ExpressionBase* expr, WireId* wire);
 
         /** Gate's inputs */
         const std::vector<WireId*>& inputs() const { return gateInputs; }
@@ -65,7 +67,7 @@ class CircuitComb : public CircuitTree {
         const std::vector<WireId*>& outputs() const { return gateOutputs; }
 
         /** Gate's expressions */
-        const std::vector<ExpressionBase>& expressions() const {
+        const std::vector<ExpressionBase*>& expressions() const {
             return gateExprs;
         }
 
@@ -76,6 +78,6 @@ class CircuitComb : public CircuitTree {
 
     private:
         std::vector<WireId*> gateInputs, gateOutputs;
-        std::vector<ExpressionBase> gateExprs;
+        std::vector<ExpressionBase*> gateExprs;
 };
 

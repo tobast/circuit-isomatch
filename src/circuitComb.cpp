@@ -14,12 +14,17 @@ void CircuitComb::InnerIoIter::operator++() {
 CircuitComb::CircuitComb()
 {}
 
+CircuitComb::~CircuitComb() {
+    for(auto expr : gateExprs)
+        delete expr;
+}
+
 void CircuitComb::addInput(WireId* input) {
     gateInputs.push_back(input);
     input->connect(this);
 }
 
-void CircuitComb::addOutput(const ExpressionBase& expr, WireId* wire) {
+void CircuitComb::addOutput(ExpressionBase* expr, WireId* wire) {
     gateOutputs.push_back(wire);
     wire->connect(this);
     gateExprs.push_back(expr);

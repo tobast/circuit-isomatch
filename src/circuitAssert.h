@@ -43,7 +43,10 @@ class CircuitAssert : public CircuitTree {
         }
         // ========= END I/O ITERATOR =========================================
 
-        CircuitAssert(const std::string& name, const ExpressionBase& expr);
+        CircuitAssert(const std::string& name, ExpressionBase* expr);
+
+        /** Deletes the gate's expression */
+        virtual ~CircuitAssert();
 
         CircType circType() const { return CIRC_ASSERT; }
 
@@ -56,7 +59,7 @@ class CircuitAssert : public CircuitTree {
         const std::vector<WireId*>& inputs() const { return gateInputs; }
 
         /** Gate's expression */
-        const ExpressionBase& expression() const { return gateExpr; }
+        const ExpressionBase* expression() const { return gateExpr; }
 
         void toDot(std::basic_ostream<char>& out, int indent=0);
 
@@ -66,6 +69,6 @@ class CircuitAssert : public CircuitTree {
     private:
         std::string name;
         std::vector<WireId*> gateInputs;
-        ExpressionBase gateExpr;
+        ExpressionBase* gateExpr;
 };
 

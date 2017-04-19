@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include "signatureConstants.h"
+
 /** Type of expression (used to cast to the right `struct`). */
 enum ExpressionType {
     ExprVar,        /** End variable */
@@ -46,7 +48,10 @@ enum ExpressionUnOperatorCst {
 /** Base expression type, inherited by every "real" expression type */
 struct ExpressionBase {
     ExpressionBase(const ExpressionType& type) : type(type) {}
+    virtual ~ExpressionBase() {}
     ExpressionType type;    /** Type of the expression (used for casts) */
+
+    //virtual sig_t sign() const = 0; // FIXME memoize?
 };
 
 /** Integer constant (`ExprConst`) */
@@ -65,51 +70,68 @@ struct ExpressionVar : ExpressionBase {
 
 /** Binary operator expression (`ExprBinOp`) */
 struct ExpressionBinOp : ExpressionBase {
-    ExpressionBinOp(const ExpressionBase& left,
-            const ExpressionBase& right,
+    ExpressionBinOp(ExpressionBase* left,
+            ExpressionBase* right,
             ExpressionBinOperator op) :
         ExpressionBase(ExprBinOp), left(left), right(right), op(op) {}
+    virtual ~ExpressionBinOp() {
+        delete left;
+        delete right;
+    }
 
-    ExpressionBase left, right;
+    ExpressionBase *left, *right;
     ExpressionBinOperator op;       /** Operator */
 };
 
 /** Unary operator expression (`ExprUnOp`) */
 struct ExpressionUnOp : ExpressionBase {
-    ExpressionUnOp(const ExpressionBase& expr, ExpressionUnOperator op) :
+    ExpressionUnOp(ExpressionBase* expr, ExpressionUnOperator op) :
        ExpressionBase(ExprUnOp), expr(expr), op(op) {}
+    virtual ~ExpressionUnOp() {
+        delete expr;
+    }
 
-    ExpressionBase expr;            /** Sub-expression */
+    ExpressionBase *expr;           /** Sub-expression */
     ExpressionUnOperator op;        /** Operator */
 };
 
 /** Unary operator with constant (`ExprUnOpCst`) */
 struct ExpressionUnOpCst : ExpressionBase {
-    ExpressionUnOpCst(const ExpressionBase& expr,
+    ExpressionUnOpCst(ExpressionBase* expr,
             int val,
             ExpressionUnOperatorCst op) :
         ExpressionBase(ExprUnOpCst), expr(expr), val(val), op(op) {}
+    virtual ~ExpressionUnOpCst() {
+        delete expr;
+    }
 
-    ExpressionBase expr;
+    ExpressionBase *expr;
     int val;                        /** Constant associated */
     ExpressionUnOperatorCst op;     /** Operator */
 };
 
 /** Take a subword out of a word (`ExprSlice`) */
 struct ExpressionSlice : ExpressionBase {
-    ExpressionSlice(const ExpressionBase& expr, unsigned beg, unsigned end) :
+    ExpressionSlice(ExpressionBase* expr, unsigned beg, unsigned end) :
         ExpressionBase(ExprSlice), expr(expr), beg(beg), end(end) {}
+    virtual ~ExpressionSlice() {
+        delete expr;
+    }
 
-    ExpressionBase expr;
+    ExpressionBase *expr;
     unsigned beg;           /** First index (inclusive) of the subword */
     unsigned end;           /** Last index (exclusive) of the subword */
 };
 
 /** Concatenate two words (`ExprMerge`) */
 struct ExpressionMerge : ExpressionBase {
-    ExpressionMerge(const ExpressionBase& left, const ExpressionBase& right) :
+    ExpressionMerge(ExpressionBase* left, ExpressionBase* right) :
         ExpressionBase(ExprMerge), left(left), right(right) {}
+    virtual ~ExpressionMerge() {
+        delete left;
+        delete right;
+    };
 
-    ExpressionBase left, right;
+    ExpressionBase *left, *right;
 };
 
