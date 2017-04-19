@@ -35,7 +35,7 @@ class CircuitDelay : public CircuitTree {
                     new InnerIoIter(this, wireOutput)
                     );
         }
-        IoIter io_end() const {
+        IoIter out_end() const {
             return IoIter(
                     new InnerIoIter(this, NULL)
                     );

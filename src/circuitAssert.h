@@ -38,7 +38,7 @@ class CircuitAssert : public CircuitTree {
                     new InnerIoIter(gateInputs.end())
                     );
         }
-        IoIter io_end() const {
+        IoIter out_end() const {
             return out_begin();
         }
         // ========= END I/O ITERATOR =========================================
