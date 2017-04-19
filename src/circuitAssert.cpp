@@ -26,7 +26,9 @@ void CircuitAssert::addInput(WireId* wire) {
 }
 
 sig_t CircuitAssert::innerSignature() const {
-    assert(false); //TODO implement
+    return signatureConstants::opcst_leaftype(
+            ((circType() << 16) | (gateInputs.size() << 8))
+            + gateExpr->sign());
 }
 
 void CircuitAssert::toDot(std::basic_ostream<char>& out, int indent) {
