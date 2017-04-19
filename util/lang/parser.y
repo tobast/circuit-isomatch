@@ -153,9 +153,9 @@ expr:
                             comb->addInput(left);
                             comb->addInput(right);
                             comb->addOutput(
-                                ExpressionBinOp(
-                                    ExpressionVar(0),
-                                    ExpressionVar(1),
+                                new ExpressionBinOp(
+                                    new ExpressionVar(0),
+                                    new ExpressionVar(1),
                                     $1),
                                 outWire);
 
@@ -171,8 +171,8 @@ expr:
                             CircuitComb* comb = new CircuitComb();
                             comb->addInput(from);
                             comb->addOutput(
-                                ExpressionUnOp(
-                                    ExpressionVar(0),
+                                new ExpressionUnOp(
+                                    new ExpressionVar(0),
                                     $1),
                                 outWire);
 
@@ -186,8 +186,8 @@ expr:
                             CircuitComb* comb = new CircuitComb();
                             comb->addInput(from);
                             comb->addOutput(
-                                ExpressionUnOpCst(
-                                    ExpressionVar(0),
+                                new ExpressionUnOpCst(
+                                    new ExpressionVar(0),
                                     $3,
                                     $1),
                                 outWire);
@@ -204,8 +204,9 @@ expr:
                             merger->addInput(left);
                             merger->addInput(right);
                             merger->addOutput(
-                                ExpressionMerge(
-                                    ExpressionVar(0), ExpressionVar(1)),
+                                new ExpressionMerge(
+                                    new ExpressionVar(0),
+                                    new ExpressionVar(1)),
                                 outWire);
                             $$ = ExprConstruction(
                                 outWire,
@@ -217,7 +218,8 @@ expr:
                             CircuitComb* slicer = new CircuitComb();
                             slicer->addInput(from);
                             slicer->addOutput(
-                                ExpressionSlice(ExpressionVar(0), $3, $4),
+                                new ExpressionSlice(
+                                    new ExpressionVar(0), $3, $4),
                                 outWire);
                             $$ = ExprConstruction(
                                 outWire,
@@ -253,7 +255,7 @@ expr:
   | NUMBER              {
                             WireId* outWire = nextWire();
                             CircuitComb* out = new CircuitComb();
-                            out->addOutput(ExpressionConst($1), outWire);
+                            out->addOutput(new ExpressionConst($1), outWire);
                             $$ = ExprConstruction(outWire, out);
                         }
 
