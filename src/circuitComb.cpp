@@ -1,4 +1,5 @@
 #include "circuitComb.h"
+#include "signatureConstants.h"
 #include "dotPrint.h"
 
 #include <cassert>
@@ -24,7 +25,7 @@ void CircuitComb::addOutput(const ExpressionBase& expr, WireId* wire) {
     gateExprs.push_back(expr);
 }
 
-CircuitComb::sig_t CircuitComb::innerSignature() const {
+sig_t CircuitComb::innerSignature() const {
     assert(false); // TODO implement
 }
 

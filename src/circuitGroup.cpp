@@ -173,7 +173,7 @@ void CircuitGroup::toDot(std::basic_ostream<char>& out, int indent) {
         << "}\n";
 }
 
-CircuitTree::sig_t CircuitGroup::ioSigOf(WireId* wire) const {
+sig_t CircuitGroup::ioSigOf(WireId* wire) const {
     failIfNotFrozen();
     try {
         return ioSigs_.at(*wire);
@@ -183,7 +183,7 @@ CircuitTree::sig_t CircuitGroup::ioSigOf(WireId* wire) const {
     }
 }
 
-CircuitGroup::sig_t CircuitGroup::innerSignature() const {
+sig_t CircuitGroup::innerSignature() const {
     assert(false); // TODO implement
 }
 
@@ -197,11 +197,11 @@ static uint64_t expmod(uint64_t base, uint64_t exp, uint64_t mod) {
 
 /** Computes the I/O signature of a single wire, given the I/O pins it is
  * connected to. */
-static CircuitTree::sig_t ioSigOfSet(const unordered_set<size_t>& set) {
+static sig_t ioSigOfSet(const unordered_set<size_t>& set) {
     static const uint32_t pinMod = signatureConstants::pinIdMod;
     auto valSig = [](size_t val) { return expmod(2, val, pinMod); };
 
-    CircuitTree::sig_t out = 0;
+    sig_t out = 0;
     for(auto& val : set)
         out = (out + valSig(val)) % pinMod;
     return out;

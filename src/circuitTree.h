@@ -4,6 +4,7 @@
 #include <iterator>
 #include <typeinfo>
 
+#include "signatureConstants.h"
 #include "wireId.h"
 
 class CircuitTree {
@@ -36,8 +37,6 @@ class CircuitTree {
         };
 
     public:
-        typedef unsigned long long sig_t;
-
         class Frozen : public std::exception {
             const char* what() {
                 return "This circuit is frozen and cannot be altered.";

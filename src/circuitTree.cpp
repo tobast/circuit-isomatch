@@ -15,7 +15,7 @@ CircuitTree::CircuitTree() :
 CircuitTree::~CircuitTree()
 {}
 
-CircuitTree::sig_t CircuitTree::sign(int level) {
+sig_t CircuitTree::sign(int level) {
     failIfNotFrozen();
     if(level < (int)memoSig.size() && memoSig[level] != 0)
         return memoSig[level];
@@ -27,7 +27,7 @@ CircuitTree::sig_t CircuitTree::sign(int level) {
     return signature;
 }
 
-CircuitTree::sig_t CircuitTree::computeSignature(int level) {
+sig_t CircuitTree::computeSignature(int level) {
     // Depends only on the gate's type and contents.
     sig_t inner = innerSignature();
 

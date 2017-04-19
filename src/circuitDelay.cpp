@@ -22,7 +22,7 @@ CircuitDelay::CircuitDelay(WireId* from, WireId* to) :
     to->connect(this);
 }
 
-CircuitDelay::sig_t CircuitDelay::innerSignature() const {
+sig_t CircuitDelay::innerSignature() const {
     return signatureConstants::opcst_leaftype(
             (circType() << 16) + (1 << 8) + 1);
 }

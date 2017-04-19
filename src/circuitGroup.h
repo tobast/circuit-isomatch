@@ -162,7 +162,7 @@ class CircuitGroup : public CircuitTree {
          * signature encompassing how this particular wire is connected to the
          * I/O pins of this group.
          * Requires the group to be frozen. */
-        CircuitTree::sig_t ioSigOf(WireId* id) const;
+        sig_t ioSigOf(WireId* id) const;
 
         /** Group's `WireManager`. */
         WireManager* wireManager() { return wireManager_; }
@@ -184,6 +184,6 @@ class CircuitGroup : public CircuitTree {
 
         std::vector<CircuitTree*> grpChildren;
         std::vector<IOPin*> grpInputs, grpOutputs;
-        std::unordered_map<WireId, CircuitTree::sig_t> ioSigs_;
+        std::unordered_map<WireId, sig_t> ioSigs_;
 };
 

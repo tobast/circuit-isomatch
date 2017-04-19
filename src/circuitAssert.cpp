@@ -1,4 +1,5 @@
 #include "circuitAssert.h"
+#include "signatureConstants.h"
 #include "dotPrint.h"
 
 #include <cassert>
@@ -20,7 +21,7 @@ void CircuitAssert::addInput(WireId* wire) {
     gateInputs.push_back(wire);
 }
 
-CircuitAssert::sig_t CircuitAssert::innerSignature() const {
+sig_t CircuitAssert::innerSignature() const {
     assert(false); //TODO implement
 }
 

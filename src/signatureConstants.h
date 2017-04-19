@@ -4,6 +4,9 @@
 
 #include <cstdint>
 
+/// Type of a gate/expression signature
+typedef uint64_t sig_t;
+
 namespace signatureConstants {
     /**
      * Holds constants values and an evaluation function to sign a given hash
