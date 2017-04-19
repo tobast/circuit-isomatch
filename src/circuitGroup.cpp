@@ -184,7 +184,14 @@ sig_t CircuitGroup::ioSigOf(WireId* wire) const {
 }
 
 sig_t CircuitGroup::innerSignature() const {
-    assert(false); // TODO implement
+    sig_t subsigs = 0;
+    for(auto sub : grpChildren)
+        subsigs += sub->sign();
+    return signatureConstants::opcst_leaftype(
+            ((circType() << 16)
+             | (grpInputs.size() << 8)
+             | (grpOutputs.size()))
+            + subsigs);
 }
 
 /** Computes (base ** exp) % mod through quick exponentiation */

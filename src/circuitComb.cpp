@@ -31,7 +31,15 @@ void CircuitComb::addOutput(ExpressionBase* expr, WireId* wire) {
 }
 
 sig_t CircuitComb::innerSignature() const {
-    assert(false); // TODO implement
+    sig_t exprsSum = 0;
+    for(auto expr : gateExprs)
+        exprsSum += expr->sign();
+
+    return signatureConstants::opcst_leaftype(
+            ((circType() << 16)
+             | (gateInputs.size() << 8)
+             | (gateOutputs.size()))
+            + exprsSum);
 }
 
 void CircuitComb::toDot(std::basic_ostream<char>& out, int indent) {
