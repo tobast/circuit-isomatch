@@ -11,6 +11,7 @@ OBJS = \
 	   wireId.o \
 	   wireManager.o \
 	   dotPrint.o \
+	   gateExpression.o \
 	   circuitTree.o \
 	   circuitGroup.o \
 	   circuitTristate.o \

@@ -51,7 +51,8 @@ struct ExpressionBase {
     virtual ~ExpressionBase() {}
     ExpressionType type;    /** Type of the expression (used for casts) */
 
-    //virtual sig_t sign() const = 0; // FIXME memoize?
+    /** Compute a signature for this expression */
+    virtual sig_t sign() const = 0; // FIXME memoize?
 };
 
 /** Integer constant (`ExprConst`) */
@@ -59,6 +60,8 @@ struct ExpressionConst : ExpressionBase {
     ExpressionConst(unsigned val) : ExpressionBase(ExprConst), val(val) {}
 
     unsigned val;           /** Numeric value */
+
+    virtual sig_t sign() const;
 };
 
 /** End variable expression (`ExprVar`) */
@@ -66,6 +69,8 @@ struct ExpressionVar : ExpressionBase {
     ExpressionVar(int id) : ExpressionBase(ExprVar), id(id) {}
 
     int id;                 /** Id of the input pin referred */
+
+    virtual sig_t sign() const;
 };
 
 /** Binary operator expression (`ExprBinOp`) */
@@ -81,6 +86,8 @@ struct ExpressionBinOp : ExpressionBase {
 
     ExpressionBase *left, *right;
     ExpressionBinOperator op;       /** Operator */
+
+    virtual sig_t sign() const;
 };
 
 /** Unary operator expression (`ExprUnOp`) */
@@ -93,6 +100,8 @@ struct ExpressionUnOp : ExpressionBase {
 
     ExpressionBase *expr;           /** Sub-expression */
     ExpressionUnOperator op;        /** Operator */
+
+    virtual sig_t sign() const;
 };
 
 /** Unary operator with constant (`ExprUnOpCst`) */
@@ -108,6 +117,8 @@ struct ExpressionUnOpCst : ExpressionBase {
     ExpressionBase *expr;
     int val;                        /** Constant associated */
     ExpressionUnOperatorCst op;     /** Operator */
+
+    virtual sig_t sign() const;
 };
 
 /** Take a subword out of a word (`ExprSlice`) */
@@ -121,6 +132,8 @@ struct ExpressionSlice : ExpressionBase {
     ExpressionBase *expr;
     unsigned beg;           /** First index (inclusive) of the subword */
     unsigned end;           /** Last index (exclusive) of the subword */
+
+    virtual sig_t sign() const;
 };
 
 /** Concatenate two words (`ExprMerge`) */
@@ -133,5 +146,6 @@ struct ExpressionMerge : ExpressionBase {
     };
 
     ExpressionBase *left, *right;
-};
 
+    virtual sig_t sign() const;
+};

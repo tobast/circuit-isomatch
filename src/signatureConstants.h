@@ -29,6 +29,7 @@ namespace signatureConstants {
     // ==== CONSTANTS ==== (Auto-generated)
     // ===================
     const uint32_t pinIdMod = 895948033;
+    const uint32_t sliceMulInner = 166597;
     const OperConstants opcst_and(3390840479u, 659787649u, 165943601u, 913324081u, 153863837u);
     const OperConstants opcst_or(1325711570u, 546652657u, 578143253u, 848168701u, 166296997u);
     const OperConstants opcst_xor(897089714u, 456534161u, 899919529u, 139709989u, 370779613u);
