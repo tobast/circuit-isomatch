@@ -43,6 +43,7 @@ extern "C" {
 }
 
 extern int yylex(void);
+extern int yylex_destroy(void);
 extern FILE* yyin;
 
 CircuitGroup* outcome = NULL;
@@ -52,6 +53,7 @@ CircuitGroup* doParse(FILE* in) {
     int rc = yyparse();
     if(rc != 0)
         return NULL;
+    yylex_destroy();
     return outcome;
 }
 }
