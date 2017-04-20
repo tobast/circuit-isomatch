@@ -13,7 +13,10 @@ int main(int, char** argv) {
         return 1;
     }
 
+    circuit->freeze();
     circuit->toDot(cout);
+
+    cout << circuit->sign() << endl;
 
     delete circuit;
     return 0;
