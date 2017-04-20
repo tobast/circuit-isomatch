@@ -176,7 +176,7 @@ void CircuitGroup::toDot(std::basic_ostream<char>& out, int indent) {
 sig_t CircuitGroup::ioSigOf(WireId* wire) const {
     failIfNotFrozen();
     try {
-        return ioSigs_.at(*wire);
+        return ioSigs_.at(wire);
     }
     catch(const std::out_of_range& e) {
         return 0;
@@ -215,17 +215,17 @@ static sig_t ioSigOfSet(const unordered_set<size_t>& set) {
 }
 
 void CircuitGroup::computeIoSigs() {
-    unordered_map<WireId, unordered_set<size_t> > inpPinsForWire;
-    unordered_map<WireId, unordered_set<size_t> > outPinsForWire;
+    unordered_map<WireId*, unordered_set<size_t> > inpPinsForWire;
+    unordered_map<WireId*, unordered_set<size_t> > outPinsForWire;
 
     for(size_t inpId = 0; inpId < grpInputs.size(); ++inpId) {
         IOPin* pin = grpInputs[inpId];
-        auto& wireSet = inpPinsForWire[*(pin->actual())];
+        auto& wireSet = inpPinsForWire[pin->actual()];
         wireSet.insert(inpId);
     }
     for(size_t outId = 0; outId < grpOutputs.size(); ++outId) {
-        IOPin* pin = grpInputs[outId];
-        auto& wireSet = outPinsForWire[*(pin->actual())];
+        IOPin* pin = grpOutputs[outId];
+        auto& wireSet = outPinsForWire[pin->actual()];
         wireSet.insert(outId);
     }
 

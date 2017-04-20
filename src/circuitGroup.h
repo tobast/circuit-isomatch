@@ -184,6 +184,6 @@ class CircuitGroup : public CircuitTree {
 
         std::vector<CircuitTree*> grpChildren;
         std::vector<IOPin*> grpInputs, grpOutputs;
-        std::unordered_map<WireId, sig_t> ioSigs_;
+        std::unordered_map<WireId*, sig_t> ioSigs_;
 };
 

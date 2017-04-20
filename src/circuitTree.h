@@ -84,11 +84,11 @@ class CircuitTree {
                 WireId* operator*() const { return *(*inner); }
 
                 bool operator==(const IoIter& oth) const {
-                    return operator*() == *oth;
+                    return inner->operator==(*oth.inner);
                 }
 
                 bool operator!=(const IoIter& oth) const {
-                    return operator*() != *oth;
+                    return !(operator==(oth));
                 }
 
             private:
@@ -119,7 +119,7 @@ class CircuitTree {
          * This is required before computing any memoized result dependning on
          * the circuit's structure.
          */
-        void freeze() { frozen = true; }
+        virtual void freeze() { frozen = true; }
 
         /**
          * O(1) comparaison using IDs
