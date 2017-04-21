@@ -6,6 +6,16 @@
 #include <sstream>
 using namespace std;
 
+
+WireId::CircIterator::CircIterator(const CircIter& iter, WireId* parent) :
+    circIter(iter), isCircIter(true), parent(parent)
+{
+    if(circIter == parent->inner()->connected.end()) {
+        isCircIter = false;
+        pinIter = parent->inner()->connectedPins.begin();
+    }
+}
+
 WireId::CircIterator& WireId::CircIterator::operator++() {
     if(isCircIter) {
         ++circIter;

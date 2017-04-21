@@ -46,7 +46,10 @@ class CircuitGroup : public CircuitTree {
                 const CircuitGroup* circ;
             public:
                 InnerIoIter(const CircuitGroup* circ, LowIter lowIter)
-                    : ptr(lowIter), circ(circ) {}
+                    : ptr(lowIter), circ(circ)
+                {
+                    nextValid();
+                }
                 InnerIoIter(const InnerIoIter& it)
                     : ptr(it.ptr) {}
                 virtual void operator++();
@@ -55,9 +58,15 @@ class CircuitGroup : public CircuitTree {
                     return new InnerIoIter(*this);
                 }
             protected:
-                virtual bool equal(const InnerIoIter& oth) const {
+                virtual bool equal(const CircuitTree::InnerIoIter& oth_) const
+                {
+                    const InnerIoIter& oth =
+                        static_cast<const InnerIoIter&>(oth_);
                     return ptr == oth.ptr && circ == oth.circ;
                 }
+            private:
+                void nextValid();
+                void innerIncr();
         };
 
     public:

@@ -33,8 +33,7 @@ class WireId {
             typedef std::vector<PinConnection>::iterator PinIter;
 
             public:
-                CircIterator(const CircIter& iter, WireId* parent) :
-                    circIter(iter), isCircIter(true), parent(parent) {}
+                CircIterator(const CircIter& iter, WireId* parent);
                 CircIterator(const PinIter& iter, WireId* parent) :
                     pinIter(iter), isCircIter(false), parent(parent) {}
 

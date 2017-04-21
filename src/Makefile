@@ -1,5 +1,5 @@
 CXX = g++
-CXXFLAGS = -O2 -Wall -Wextra -Werror -std=c++14
+CXXFLAGS = -O0 -g -Wall -Wextra -Werror -std=c++14
 CXXLIBS =
 AR = ar
 DOXYGEN = doxygen

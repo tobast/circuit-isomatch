@@ -19,7 +19,10 @@ class CircuitDelay : public CircuitTree {
                     return new InnerIoIter(*this);
                 }
             protected:
-                bool equal(const InnerIoIter& oth) const {
+                virtual bool equal(const CircuitTree::InnerIoIter& oth_) const
+                {
+                    const InnerIoIter& oth =
+                        static_cast<const InnerIoIter&>(oth_);
                     return ptr == oth.ptr && circ == oth.circ;
                 }
         };

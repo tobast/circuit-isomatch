@@ -5,6 +5,14 @@
 #include <cassert>
 using namespace std;
 
+CircuitComb::InnerIoIter::InnerIoIter(
+        const CircuitComb* circ, CircuitComb::InnerIoIter::LowIter lowIter)
+    : ptr(lowIter), circ(circ)
+{
+    if(ptr == circ->gateInputs.end())
+        ptr = circ->gateOutputs.begin();
+}
+
 void CircuitComb::InnerIoIter::operator++() {
     ++ptr;
     if(ptr == circ->gateInputs.end())

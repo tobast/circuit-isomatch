@@ -26,6 +26,18 @@ void IOPin::connect(WireId* formal) {
 }
 
 void CircuitGroup::InnerIoIter::operator++() {
+    innerIncr();
+    nextValid(); // Forward to the next valid element.
+}
+
+void CircuitGroup::InnerIoIter::nextValid() {
+    while(ptr != circ->grpOutputs.end() && (*ptr)->formal() == nullptr)
+        innerIncr();
+}
+
+void CircuitGroup::InnerIoIter::innerIncr() {
+    if(ptr == circ->grpOutputs.end())
+        return;
     ++ptr;
     if(ptr == circ->grpInputs.end())
         ptr = circ->grpOutputs.begin();

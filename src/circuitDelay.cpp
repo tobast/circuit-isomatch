@@ -10,8 +10,8 @@ using namespace std;
 void CircuitDelay::InnerIoIter::operator++() {
     if(ptr == circ->wireInput)
         ptr = circ->wireOutput;
-    if(ptr == circ->wireOutput)
-        ptr = NULL;
+    else if(ptr == circ->wireOutput)
+        ptr = nullptr;
 }
 
 CircuitDelay::CircuitDelay(WireId* from, WireId* to) :

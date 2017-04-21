@@ -7,12 +7,12 @@ class CircuitComb : public CircuitTree {
     protected:
         // ========= I/O ITERATOR =============================================
         class InnerIoIter : public CircuitTree::InnerIoIter {
-                typedef std::vector<WireId*>::const_iterator LowIter;
+            public: typedef std::vector<WireId*>::const_iterator LowIter;
+            private:
                 LowIter ptr;
                 const CircuitComb* circ;
             public:
-                InnerIoIter(const CircuitComb* circ, LowIter lowIter)
-                    : ptr(lowIter), circ(circ) {}
+                InnerIoIter(const CircuitComb* circ, LowIter lowIter);
                 InnerIoIter(const InnerIoIter& it)
                     : ptr(it.ptr) {}
                 virtual void operator++();
@@ -21,7 +21,10 @@ class CircuitComb : public CircuitTree {
                     return new InnerIoIter(*this);
                 }
             protected:
-                virtual bool equal(const InnerIoIter& oth) const {
+                virtual bool equal(const CircuitTree::InnerIoIter& oth_) const
+                {
+                    const InnerIoIter& oth =
+                        static_cast<const InnerIoIter&>(oth_);
                     return circ == oth.circ && ptr == oth.ptr;
                 }
         };

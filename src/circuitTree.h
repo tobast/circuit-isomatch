@@ -84,7 +84,7 @@ class CircuitTree {
                 WireId* operator*() const { return *(*inner); }
 
                 bool operator==(const IoIter& oth) const {
-                    return inner->operator==(*oth.inner);
+                    return inner == oth.inner || (*inner) == (*oth.inner);
                 }
 
                 bool operator!=(const IoIter& oth) const {
@@ -190,6 +190,6 @@ class CircuitTree {
         static size_t nextCircuitId;
         size_t circuitId;
 
-    friend CircuitGroup; // FIXME? To allow changing `ancestor_`
+    friend CircuitGroup;
 };
 
