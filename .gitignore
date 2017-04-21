@@ -35,3 +35,6 @@
 *.out
 *.app
 docs
+
+# Python
+__pycache__
