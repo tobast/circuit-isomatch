@@ -41,7 +41,7 @@ aux.o: aux.cpp parser.tab.hpp
 clean:
 	rm -rf *.bin *.o *.yy.{cpp,c} *.tab.{cpp,c,h,hpp}
 
-test: sig.bin
+test: sig.bin dot.bin
 	./run_sigtests.py
 	./dot.bin circ/processor.circ > /dev/null
 	valgrind -q ./dot.bin circ/processor.circ > /dev/null
