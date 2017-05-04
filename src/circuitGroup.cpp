@@ -25,6 +25,16 @@ void IOPin::connect(WireId* formal) {
     formal->connect(this, _actual);
 }
 
+void IOPin::serialize(std::ostream& out) {
+    out << "{\"actual\":\"" << _actual->name() << "\""
+        << ",\"formal\":\"";
+    if(_formal == nullptr)
+        out << _formalName;
+    else
+        out << _formal->name();
+    out << "\"}";
+}
+
 void CircuitGroup::InnerIoIter::operator++() {
     innerIncr();
     nextValid(); // Forward to the next valid element.
@@ -246,4 +256,34 @@ void CircuitGroup::computeIoSigs() {
     for(auto& entry : outPinsForWire)
         ioSigs_[entry.first] += (ioSigOfSet(entry.second) << 32);
     // FIXME ough to mix up a bit the two parts.
+}
+
+void CircuitGroup::serialize_body(std::basic_ostream<char>& out) {
+    char delim;
+
+    out << "\"name\":\"" << name << "\""
+        << ",\"inp\":[";
+    delim = ' ';
+    for(auto pin : grpInputs) {
+        out << delim;
+        pin->serialize(out);
+        delim = ',';
+    }
+
+    out << "],\"out\":[";
+    delim = ' ';
+    for(auto pin : grpOutputs) {
+        out << delim;
+        pin->serialize(out);
+        delim = ',';
+    }
+
+    out << "],\"children\":[";
+    delim = ' ';
+    for(auto child : grpChildren) {
+        out << delim;
+        child->serialize(out);
+        delim = ',';
+    }
+    out << "]";
 }

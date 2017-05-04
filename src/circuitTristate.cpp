@@ -45,3 +45,8 @@ void CircuitTristate::toDot(std::basic_ostream<char>& out, int indent) {
             "headport=e");
 }
 
+void CircuitTristate::serialize_body(std::basic_ostream<char>& out) {
+    out << "\"inp\":\"" << wireInput->name() << "\","
+        << "\"out\":\"" << wireOutput->name() << "\","
+        << "\"enable\":\"" << wireEnable->name() << "\"";
+}

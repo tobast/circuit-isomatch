@@ -29,6 +29,8 @@ class IOPin {
         WireId* actual() const { return _actual; }
         CircuitGroup* group() const { return _group; }
 
+        void serialize(std::ostream& out);
+
     private:
         WireId* _formal;
         std::string _formalName; /// Used if formal is not yet connected
@@ -183,6 +185,7 @@ class CircuitGroup : public CircuitTree {
     protected:
         virtual sig_t innerSignature() const;
         void computeIoSigs();
+        virtual void serialize_body(std::basic_ostream<char>& out);
 
     private:
         void setAncestor(CircuitTree* tree) const;

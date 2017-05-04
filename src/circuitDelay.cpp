@@ -41,3 +41,7 @@ void CircuitDelay::toDot(std::basic_ostream<char>& out, int indent) {
             "headport=e");
 }
 
+void CircuitDelay::serialize_body(std::basic_ostream<char>& out) {
+    out << "\"inp\":" << wireInput->name()
+        << ",\"out\":" << wireOutput->name();
+}

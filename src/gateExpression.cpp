@@ -108,3 +108,62 @@ sig_t ExpressionSlice::sign() const {
 sig_t ExpressionMerge::sign() const {
     return opcst_merge(left->sign() - right->sign());
 }
+
+void ExpressionBase::serialize(std::basic_ostream<char>& out) const {
+    out << "{\"type\":"
+        << (int)type
+        << ",";
+
+    serialize_body(out);
+
+    out << "}";
+}
+
+void ExpressionConst::serialize_body(std::basic_ostream<char>& out) const {
+    out << "\"val\":" << val;
+}
+
+void ExpressionVar::serialize_body(std::basic_ostream<char>& out) const {
+    out << "\"id\":" << id;
+}
+
+void ExpressionBinOp::serialize_body(std::basic_ostream<char>& out) const {
+    out << "\"op\":"
+        << op
+        << ",\"left\":";
+    left->serialize(out);
+    out << ",\"right\":";
+    right->serialize(out);
+}
+
+void ExpressionUnOp::serialize_body(std::basic_ostream<char>& out) const {
+    out << "\"op\":"
+        << op
+        << ",\"expr\":";
+    expr->serialize(out);
+}
+
+void ExpressionUnOpCst::serialize_body(std::basic_ostream<char>& out) const {
+    out << "\"op\":"
+        << op
+        << ",\"val\":"
+        << val
+        << ",\"expr\":";
+    expr->serialize(out);
+}
+
+void ExpressionSlice::serialize_body(std::basic_ostream<char>& out) const {
+    out << "\"beg\":"
+        << beg
+        << ",\"end\":"
+        << end
+        << ",\"expr\":";
+    expr->serialize(out);
+}
+
+void ExpressionMerge::serialize_body(std::basic_ostream<char>& out) const {
+    out << "\"left\":";
+    left->serialize(out);
+    out << ".\"right\":";
+    right->serialize(out);
+}

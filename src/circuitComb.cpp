@@ -69,3 +69,27 @@ void CircuitComb::toDot(std::basic_ostream<char>& out, int indent) {
     }
 }
 
+void CircuitComb::serialize_body(std::basic_ostream<char>& out) {
+    char delim=' ';
+    out << "\"inp\":[";
+    for(auto elt: gateInputs) {
+        out << delim << "\"" << elt->name() << "\"";
+        delim = ',';
+    }
+
+    out << "],\"out\":[";
+    delim=' ';
+    for(auto elt: gateOutputs) {
+        out << delim << "\"" << elt->name() << "\"";
+        delim = ',';
+    }
+
+    out << "],\"exprs\":[";
+    delim=' ';
+    for(auto expr: gateExprs) {
+        out << delim;
+        expr->serialize(out);
+        delim = ',';
+    }
+    out << "]";
+}

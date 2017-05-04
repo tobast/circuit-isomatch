@@ -44,3 +44,14 @@ void CircuitAssert::toDot(std::basic_ostream<char>& out, int indent) {
     }
 }
 
+void CircuitAssert::serialize_body(std::basic_ostream<char>& out) {
+    out << "\"name\":" << name
+        << ",\"inp\":[";
+    char delim = ' ';
+    for(auto pin : gateInputs) {
+        out << delim << "\"" << pin->name() << "\"";
+        delim = ',';
+    }
+    out << "],\"expr\":";
+    gateExpr->serialize(out);
+}

@@ -68,6 +68,7 @@ class CircuitAssert : public CircuitTree {
 
     protected:
         virtual sig_t innerSignature() const;
+        virtual void serialize_body(std::basic_ostream<char>& out);
 
     private:
         std::string name;

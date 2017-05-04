@@ -5,6 +5,7 @@
 #pragma once
 
 #include "signatureConstants.h"
+#include <ostream>
 
 /** Type of expression (used to cast to the right `struct`). */
 enum ExpressionType {
@@ -53,6 +54,12 @@ struct ExpressionBase {
 
     /** Compute a signature for this expression */
     virtual sig_t sign() const = 0; // FIXME memoize?
+
+    /** Serializes the expression to JSON */
+    void serialize(std::basic_ostream<char>& out) const;
+
+    private:
+        virtual void serialize_body(std::basic_ostream<char>& out) const = 0;
 };
 
 /** Integer constant (`ExprConst`) */
@@ -62,6 +69,9 @@ struct ExpressionConst : ExpressionBase {
     unsigned val;           /** Numeric value */
 
     virtual sig_t sign() const;
+
+    private:
+        virtual void serialize_body(std::basic_ostream<char>& out) const;
 };
 
 /** End variable expression (`ExprVar`) */
@@ -71,6 +81,9 @@ struct ExpressionVar : ExpressionBase {
     int id;                 /** Id of the input pin referred */
 
     virtual sig_t sign() const;
+
+    private:
+        virtual void serialize_body(std::basic_ostream<char>& out) const;
 };
 
 /** Binary operator expression (`ExprBinOp`) */
@@ -88,6 +101,9 @@ struct ExpressionBinOp : ExpressionBase {
     ExpressionBinOperator op;       /** Operator */
 
     virtual sig_t sign() const;
+
+    private:
+        virtual void serialize_body(std::basic_ostream<char>& out) const;
 };
 
 /** Unary operator expression (`ExprUnOp`) */
@@ -102,6 +118,9 @@ struct ExpressionUnOp : ExpressionBase {
     ExpressionUnOperator op;        /** Operator */
 
     virtual sig_t sign() const;
+
+    private:
+        virtual void serialize_body(std::basic_ostream<char>& out) const;
 };
 
 /** Unary operator with constant (`ExprUnOpCst`) */
@@ -119,6 +138,9 @@ struct ExpressionUnOpCst : ExpressionBase {
     ExpressionUnOperatorCst op;     /** Operator */
 
     virtual sig_t sign() const;
+
+    private:
+        virtual void serialize_body(std::basic_ostream<char>& out) const;
 };
 
 /** Take a subword out of a word (`ExprSlice`) */
@@ -134,6 +156,9 @@ struct ExpressionSlice : ExpressionBase {
     unsigned end;           /** Last index (exclusive) of the subword */
 
     virtual sig_t sign() const;
+
+    private:
+        virtual void serialize_body(std::basic_ostream<char>& out) const;
 };
 
 /** Concatenate two words (`ExprMerge`) */
@@ -148,4 +173,7 @@ struct ExpressionMerge : ExpressionBase {
     ExpressionBase *left, *right;
 
     virtual sig_t sign() const;
+
+    private:
+        virtual void serialize_body(std::basic_ostream<char>& out) const;
 };

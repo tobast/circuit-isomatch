@@ -157,6 +157,9 @@ class CircuitTree {
          * for debugging. */
         virtual void toDot(std::basic_ostream<char>& out, int indent=0) = 0;
 
+        /** Serializes this circuit to JSON on the provided stream */
+        void serialize(std::basic_ostream<char>& out);
+
     protected:
         /** Computes the actual signature of the circuit when it was not
          * previously memoized.
@@ -167,6 +170,10 @@ class CircuitTree {
         /** Computes the inner signature of a gate. This should be
          * reimplemented for every gate type. */
         virtual sig_t innerSignature() const = 0;
+
+        /** Serializes this circuit's node-type-dependant values to JSON. This
+         * must be implemented in every subclass. */
+        virtual void serialize_body(std::basic_ostream<char>& out) = 0;
 
         /**
          * Checks whether the circuit is frozen, and fails with `Frozen` if it

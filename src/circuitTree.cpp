@@ -27,6 +27,12 @@ sig_t CircuitTree::sign(int level) {
     return signature;
 }
 
+void CircuitTree::serialize(std::basic_ostream<char>& out) {
+    out << "{\"type\":" << circType() << ",";
+    serialize_body(out);
+    out << "}";
+}
+
 sig_t CircuitTree::computeSignature(int level) {
     // Depends only on the gate's type and contents.
     sig_t inner = innerSignature();
