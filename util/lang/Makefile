@@ -9,7 +9,7 @@ YACC = bison
 YACCFLAGS =
 
 PARSER = parser.y
-MAINS = dot sig
+MAINS = dot sig serialize
 OBJS = aux.o parser.tab.o lexer.yy.o parseTools.o
 
 ##########################################################################
@@ -41,12 +41,13 @@ aux.o: aux.cpp parser.tab.hpp
 clean:
 	rm -rf *.bin *.o *.yy.{cpp,c} *.tab.{cpp,c,h,hpp}
 
-test: sig.bin dot.bin
+test: sig.bin dot.bin serialize.bin
 	./run_sigtests.py
 	./dot.bin circ/processor.circ > /dev/null
 	valgrind -q ./dot.bin circ/processor.circ > /dev/null
 	./sig.bin circ/processor.circ > /dev/null
 	valgrind -q ./sig.bin circ/processor.circ > /dev/null
+	./serialize.bin circ/processor.circ > /dev/null
 	@echo -e "\e[92m>> All tests passed! :)\e[0m"
 
 .PHONY: all build clean test
