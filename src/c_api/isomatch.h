@@ -1,17 +1,17 @@
-/**
- * C API header file for the Isomatch library
- **/
-
-/**
-  General purpose notes on this API:
-
-  - Every `free`-like specific function is recursive, where possible; eg.
-    freeing a hierarchy group will free the underlying circuits, freeing a comb
-    gate will free its expressions, ...
-  - Every function returning a pointer will return `NULL` if an error occurred.
-**/
-
 #pragma once
+
+/**
+ * @brief C API header file for the Isomatch library
+ * @file c_api/isomatch.h
+ *
+ * General purpose notes on this API:
+ *
+ * - Every `free`-like specific function is recursive, where possible; eg.
+ *   freeing a hierarchy group will free the underlying circuits, freeing a
+ *   comb gate will free its expressions, ...
+ * - Every function returning a pointer will return `NULL` if an error
+ *   occurred.
+ **/
 
 #include <stdint.h>
 
@@ -31,10 +31,10 @@ extern "C" {
 /*****************************************************************************/
 /* Type declarations                                                         */
 /*****************************************************************************/
-typedef uint64_t sig_t;
-typedef void* circuit_handle;
-typedef void* expr_handle;
-typedef const char* wire_handle;
+typedef uint64_t sig_t;         ///< Type of a circuit signature
+typedef void* circuit_handle;   ///< Value representing a circuit
+typedef void* expr_handle;      ///< Value representing an expression
+typedef const char* wire_handle;    ///< A wire name
 
 /*****************************************************************************/
 /* Enumerations                                                              */
@@ -46,29 +46,29 @@ typedef const char* wire_handle;
 
 /** Operator for `ExprBinOp` */
 enum isom_expr_binop {
-    BAnd,           /** Bitwise and */
-    BOr,            /** Bitwise or */
-    BXor,           /** Bitwise exclusive or */
-    BAdd,           /** Addition */
-    BSub,           /** Subtraction */
-    BMul,           /** Multiplication */
-    BDiv,           /** Division */
-    BMod,           /** Modulus */
-    BLsr,           /** Logical shift right */
-    BLsl,           /** Logical shift left */
-    BAsr,           /** Arithmetic shift right */
+    BAnd,           ///< Bitwise and
+    BOr,            ///< Bitwise or
+    BXor,           ///< Bitwise exclusive or
+    BAdd,           ///< Addition
+    BSub,           ///< Subtraction
+    BMul,           ///< Multiplication
+    BDiv,           ///< Division
+    BMod,           ///< Modulus
+    BLsr,           ///< Logical shift right
+    BLsl,           ///< Logical shift left
+    BAsr,           ///< Arithmetic shift right
 };
 
 /** Operator for `ExprUnOp` */
 enum isom_expr_unop {
-    UNot,           /** Unary bitwise not */
+    UNot,           ///< Unary bitwise not
 };
 
 /** Operator for `ExprUnOpCst` */
 enum isom_expr_unop_cst {
-    UCLsr,          /** Logical shift right of fixed shift */
-    UCLsl,          /** Logical shift left of fixed shift */
-    UCAsr,          /** Arithmetic shift right of fixed shift */
+    UCLsr,          ///< Logical shift right of fixed shift
+    UCLsl,          ///< Logical shift left of fixed shift
+    UCAsr,          ///< Arithmetic shift right of fixed shift
 };
 
 /*****************************************************************************/
@@ -139,6 +139,7 @@ circuit_handle build_group(const char* name);
 int build_group_add_child(circuit_handle child, circuit_handle parent);
 
 /** Add an input pin to the given circuit group.
+ * @param group The group to work on
  * @param actual The name of the pin when accessed from inside the group
  * @param formal The name of the pin when accessed from outside the group
  * @return 0 on success, > 0 on failure
@@ -148,6 +149,7 @@ int build_group_add_input(circuit_handle group,
         wire_handle formal);
 
 /** Add an output pin to the given circuit group.
+ * @param group The group to work on
  * @param actual The name of the pin when accessed from inside the group
  * @param formal The name of the pin when accessed from outside the group
  * @return 0 on success, > 0 on failure

@@ -8,13 +8,13 @@
 
 /** Type of expression (used to cast to the right `struct`). */
 enum ExpressionType {
-    ExprVar,        /** End variable */
-    ExprConst,      /** Integer constant */
-    ExprBinOp,      /** Binary operator (+, AND, ...) */
-    ExprUnOp,       /** Unary operator (NOT, ...) */
-    ExprUnOpCst,    /** Unary operator with constant (CstLSL, ...) */
-    ExprSlice,      /** Take a subword out of a word */
-    ExprMerge,      /** Concatenate two words into a longer one */
+    ExprVar,        ///< End variable
+    ExprConst,      ///< Integer constant
+    ExprBinOp,      ///< Binary operator (+, AND, ...)
+    ExprUnOp,       ///< Unary operator (NOT, ...)
+    ExprUnOpCst,    ///< Unary operator with constant (CstLSL, ...)
+    ExprSlice,      ///< Take a subword out of a word
+    ExprMerge,      ///< Concatenate two words into a longer one
 };
 
 /***********************************************************************/
@@ -24,29 +24,29 @@ enum ExpressionType {
 
 /** Operator for `ExprBinOp` */
 enum ExpressionBinOperator {
-    BAnd,           /** Bitwise and */
-    BOr,            /** Bitwise or */
-    BXor,           /** Bitwise exclusive or */
-    BAdd,           /** Addition */
-    BSub,           /** Subtraction */
-    BMul,           /** Multiplication */
-    BDiv,           /** Division */
-    BMod,           /** Modulus */
-    BLsr,           /** Logical shift right */
-    BLsl,           /** Logical shift left */
-    BAsr,           /** Arithmetic shift right */
+    BAnd,           ///< Bitwise and
+    BOr,            ///< Bitwise or
+    BXor,           ///< Bitwise exclusive or
+    BAdd,           ///< Addition
+    BSub,           ///< Subtraction
+    BMul,           ///< Multiplication
+    BDiv,           ///< Division
+    BMod,           ///< Modulus
+    BLsr,           ///< Logical shift right
+    BLsl,           ///< Logical shift left
+    BAsr,           ///< Arithmetic shift right
 };
 
 /** Operator for `ExprUnOp` */
 enum ExpressionUnOperator {
-    UNot,           /** Unary bitwise not */
+    UNot,           ///< Unary bitwise not
 };
 
 /** Operator for `ExprUnOpCst` */
 enum ExpressionUnOperatorCst {
-    UCLsr,          /** Logical shift right of fixed shift */
-    UCLsl,          /** Logical shift left of fixed shift */
-    UCAsr,          /** Arithmetic shift right of fixed shift */
+    UCLsr,          ///< Logical shift right of fixed shift
+    UCLsl,          ///< Logical shift left of fixed shift
+    UCAsr,          ///< Arithmetic shift right of fixed shift
 };
 
 
@@ -54,7 +54,7 @@ enum ExpressionUnOperatorCst {
 struct ExpressionBase {
     ExpressionBase(const ExpressionType& type) : type(type) {}
     virtual ~ExpressionBase() {}
-    ExpressionType type;    /** Type of the expression (used for casts) */
+    ExpressionType type;    ///< Type of the expression (used for casts)
 
     /** Compute a signature for this expression */
     virtual sig_t sign() const = 0; // FIXME memoize?
@@ -64,7 +64,7 @@ struct ExpressionBase {
 struct ExpressionConst : ExpressionBase {
     ExpressionConst(unsigned val) : ExpressionBase(ExprConst), val(val) {}
 
-    unsigned val;           /** Numeric value */
+    unsigned val;           ///< Numeric value
 
     virtual sig_t sign() const;
 };
@@ -73,7 +73,7 @@ struct ExpressionConst : ExpressionBase {
 struct ExpressionVar : ExpressionBase {
     ExpressionVar(int id) : ExpressionBase(ExprVar), id(id) {}
 
-    int id;                 /** Id of the input pin referred */
+    int id;                 ///< Id of the input pin referred
 
     virtual sig_t sign() const;
 };
@@ -90,7 +90,7 @@ struct ExpressionBinOp : ExpressionBase {
     }
 
     ExpressionBase *left, *right;
-    ExpressionBinOperator op;       /** Operator */
+    ExpressionBinOperator op;       ///< Operator
 
     virtual sig_t sign() const;
 };
@@ -103,8 +103,8 @@ struct ExpressionUnOp : ExpressionBase {
         delete expr;
     }
 
-    ExpressionBase *expr;           /** Sub-expression */
-    ExpressionUnOperator op;        /** Operator */
+    ExpressionBase *expr;           ///< Sub-expression
+    ExpressionUnOperator op;        ///< Operator
 
     virtual sig_t sign() const;
 };
@@ -120,8 +120,8 @@ struct ExpressionUnOpCst : ExpressionBase {
     }
 
     ExpressionBase *expr;
-    int val;                        /** Constant associated */
-    ExpressionUnOperatorCst op;     /** Operator */
+    int val;                        ///< Constant associated
+    ExpressionUnOperatorCst op;     ///< Operator
 
     virtual sig_t sign() const;
 };
@@ -135,8 +135,8 @@ struct ExpressionSlice : ExpressionBase {
     }
 
     ExpressionBase *expr;
-    unsigned beg;           /** First index (inclusive) of the subword */
-    unsigned end;           /** Last index (exclusive) of the subword */
+    unsigned beg;           ///< First index (inclusive) of the subword
+    unsigned end;           ///< Last index (exclusive) of the subword
 
     virtual sig_t sign() const;
 };
