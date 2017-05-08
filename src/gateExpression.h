@@ -17,6 +17,11 @@ enum ExpressionType {
     ExprMerge,      /** Concatenate two words into a longer one */
 };
 
+/***********************************************************************/
+/* WARNING! The following enums are duplicated (on purpose) inside the */
+/* C API. Change this API as well if you are to change these enums!    */
+/***********************************************************************/
+
 /** Operator for `ExprBinOp` */
 enum ExpressionBinOperator {
     BAnd,           /** Bitwise and */
