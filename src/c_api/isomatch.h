@@ -20,21 +20,40 @@ extern "C" {
 #endif
 
 /*****************************************************************************/
-/* Return values (aka error codes)                                           */
-/*****************************************************************************/
-
-#define ISOM_RC_NULLPTR 1 ///< One of the parameters was a null pointer
-#define ISOM_RC_DOMAIN  2 ///< One of the parameters has the wrong pointer type
-#define ISOM_RC_ERROR   255 ///< An undefined error occurred
-//TODO complete this list
-
-/*****************************************************************************/
 /* Type declarations                                                         */
 /*****************************************************************************/
 typedef uint64_t sig_t;         ///< Type of a circuit signature
 typedef void* circuit_handle;   ///< Value representing a circuit
 typedef void* expr_handle;      ///< Value representing an expression
 typedef const char* wire_handle;    ///< A wire name
+
+/*****************************************************************************/
+/* Error handling                                                            */
+/*****************************************************************************/
+
+/***********************************/
+/* Return values (aka error codes) */
+/***********************************/
+
+/// Return codes of the `int`-returning functions in this API
+typedef enum isom_rc {
+    ISOM_RC_OK      = 0, ///< Everything went fine
+    ISOM_RC_NULLPTR = 1, ///< One of the parameters was a null pointer
+    ISOM_RC_DOMAIN  = 2, ///< One of the parameters has the wrong pointer type
+    ISOM_RC_ERROR   = 255, ///< An undefined error occurred
+} isom_rc;
+//TODO complete this list
+
+/*****************************/
+/* Error reporting functions */
+/*****************************/
+
+/// Return the error code of the last error that occurred
+isom_rc isom_last_error();
+
+/** Return a human-friendly string describing the last error that occurred.
+ * Note that you don't have to `free` the returned string. */
+const char* isom_strerror();
 
 /*****************************************************************************/
 /* Enumerations                                                              */
@@ -214,7 +233,7 @@ sig_t sign_with_precision(circuit_handle circuit, unsigned precision_level);
 /* Circuit matching                                                          */
 /*****************************************************************************/
 
-/// TODO TO BE IMPLEMENTED
+// TODO TO BE IMPLEMENTED
 
 #ifdef __cplusplus
 }
