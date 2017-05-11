@@ -287,3 +287,48 @@ circuit_handle build_tristate(circuit_handle parent,
 
 // === Expressions
 
+expr_handle build_expr_const(unsigned val) {
+    return new ExpressionConst(val);
+}
+
+expr_handle build_expr_var(int input_pin) {
+    return new ExpressionVar(input_pin);
+}
+
+expr_handle build_expr_binop(enum isom_expr_binop op,
+        expr_handle left,
+        expr_handle right)
+{
+    return new ExpressionBinOp(
+            exprOfHandle(left),
+            exprOfHandle(right),
+            (expr::ExpressionBinOperator)op);
+}
+
+expr_handle build_expr_unop(enum isom_expr_unop op, expr_handle expr) {
+    return new ExpressionUnOp(
+            exprOfHandle(expr),
+            (expr::ExpressionUnOperator)op);
+}
+
+expr_handle build_expr_unop_cst(enum isom_expr_unop_cst op,
+        int param,
+        expr_handle expr)
+{
+    return new ExpressionUnOpCst(
+            exprOfHandle(expr),
+            param,
+            (expr::ExpressionUnOperatorCst)op);
+}
+
+expr_handle build_expr_slice(expr_handle expr, unsigned beg, unsigned end) {
+    return new ExpressionSlice(exprOfHandle(expr), beg, end);
+}
+
+expr_handle build_expr_merge(expr_handle left, expr_handle right) {
+    return new ExpressionMerge(exprOfHandle(left), exprOfHandle(right));
+}
+
+void free_expression(expr_handle expr) {
+    delete exprOfHandle(expr);
+}
