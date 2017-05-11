@@ -227,7 +227,7 @@ expr_handle build_expr_slice(expr_handle expr, unsigned beg, unsigned end);
 expr_handle build_expr_merge(expr_handle left, expr_handle right);
 
 /// Free the given previously created expression
-void free_expression(expr_handle expr);
+int free_expression(expr_handle expr);
 
 /*****************************************************************************/
 /* Signature                                                                 */

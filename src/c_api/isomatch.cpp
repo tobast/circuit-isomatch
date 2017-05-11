@@ -288,49 +288,89 @@ circuit_handle build_tristate(circuit_handle parent,
 // === Expressions
 
 expr_handle build_expr_const(unsigned val) {
-    return new ExpressionConst(val);
+    try {
+        return new ExpressionConst(val);
+    } catch(const IsomError& e) {
+        handleError(e);
+        return nullptr;
+    }
 }
 
 expr_handle build_expr_var(int input_pin) {
-    return new ExpressionVar(input_pin);
+    try {
+        return new ExpressionVar(input_pin);
+    } catch(const IsomError& e) {
+        handleError(e);
+        return nullptr;
+    }
 }
 
 expr_handle build_expr_binop(enum isom_expr_binop op,
         expr_handle left,
         expr_handle right)
 {
-    return new ExpressionBinOp(
-            exprOfHandle(left),
-            exprOfHandle(right),
-            (expr::ExpressionBinOperator)op);
+    try {
+        return new ExpressionBinOp(
+                exprOfHandle(left),
+                exprOfHandle(right),
+                (expr::ExpressionBinOperator)op);
+    } catch(const IsomError& e) {
+        handleError(e);
+        return nullptr;
+    }
 }
 
 expr_handle build_expr_unop(enum isom_expr_unop op, expr_handle expr) {
-    return new ExpressionUnOp(
-            exprOfHandle(expr),
-            (expr::ExpressionUnOperator)op);
+    try {
+        return new ExpressionUnOp(
+                exprOfHandle(expr),
+                (expr::ExpressionUnOperator)op);
+    } catch(const IsomError& e) {
+        handleError(e);
+        return nullptr;
+    }
 }
 
 expr_handle build_expr_unop_cst(enum isom_expr_unop_cst op,
         int param,
         expr_handle expr)
 {
-    return new ExpressionUnOpCst(
-            exprOfHandle(expr),
-            param,
-            (expr::ExpressionUnOperatorCst)op);
+    try {
+        return new ExpressionUnOpCst(
+                exprOfHandle(expr),
+                param,
+                (expr::ExpressionUnOperatorCst)op);
+    } catch(const IsomError& e) {
+        handleError(e);
+        return nullptr;
+    }
 }
 
 expr_handle build_expr_slice(expr_handle expr, unsigned beg, unsigned end) {
-    return new ExpressionSlice(exprOfHandle(expr), beg, end);
+    try {
+        return new ExpressionSlice(exprOfHandle(expr), beg, end);
+    } catch(const IsomError& e) {
+        handleError(e);
+        return nullptr;
+    }
 }
 
 expr_handle build_expr_merge(expr_handle left, expr_handle right) {
-    return new ExpressionMerge(exprOfHandle(left), exprOfHandle(right));
+    try {
+        return new ExpressionMerge(exprOfHandle(left), exprOfHandle(right));
+    } catch(const IsomError& e) {
+        handleError(e);
+        return nullptr;
+    }
 }
 
-void free_expression(expr_handle expr) {
-    delete exprOfHandle(expr);
+int free_expression(expr_handle expr) {
+    try {
+        delete exprOfHandle(expr);
+        return ISOM_RC_OK;
+    } catch(const IsomError& e) {
+        return handleError(e);
+    }
 }
 
 // === Signature
