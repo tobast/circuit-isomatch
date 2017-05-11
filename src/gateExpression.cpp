@@ -10,69 +10,69 @@ class UnimplementedOperator : public std::exception {
     }
 };
 
-static bool isCommutative(ExpressionBinOperator op) {
+static bool isCommutative(expr::ExpressionBinOperator op) {
     switch(op) {
-        case BAnd:
-        case BOr:
-        case BXor:
-        case BAdd:
-        case BMul:
+        case expr::BAnd:
+        case expr::BOr:
+        case expr::BXor:
+        case expr::BAdd:
+        case expr::BMul:
             return true;
 
-        case BSub:
-        case BDiv:
-        case BMod:
-        case BLsr:
-        case BLsl:
-        case BAsr:
+        case expr::BSub:
+        case expr::BDiv:
+        case expr::BMod:
+        case expr::BLsr:
+        case expr::BLsl:
+        case expr::BAsr:
             return false;
     }
     throw UnimplementedOperator();
 }
 
-static const OperConstants& cstOf(ExpressionBinOperator op) {
+static const OperConstants& cstOf(expr::ExpressionBinOperator op) {
     switch(op) {
-        case BAnd:
+        case expr::BAnd:
             return opcst_and;
-        case BOr:
+        case expr::BOr:
             return opcst_or;
-        case BXor:
+        case expr::BXor:
             return opcst_xor;
-        case BAdd:
+        case expr::BAdd:
             return opcst_add;
-        case BSub:
+        case expr::BSub:
             return opcst_sub;
-        case BMul:
+        case expr::BMul:
             return opcst_mul;
-        case BDiv:
+        case expr::BDiv:
             return opcst_div;
-        case BMod:
+        case expr::BMod:
             return opcst_mod;
-        case BLsr:
+        case expr::BLsr:
             return opcst_lsr;
-        case BLsl:
+        case expr::BLsl:
             return opcst_lsl;
-        case BAsr:
+        case expr::BAsr:
             return opcst_asr;
     }
     throw UnimplementedOperator();
 }
 
-static const OperConstants& cstOf(ExpressionUnOperator op) {
+static const OperConstants& cstOf(expr::ExpressionUnOperator op) {
     switch(op) {
-        case UNot:
+        case expr::UNot:
             return opcst_not;
     }
     throw UnimplementedOperator();
 }
 
-static const OperConstants& cstOf(ExpressionUnOperatorCst op) {
+static const OperConstants& cstOf(expr::ExpressionUnOperatorCst op) {
     switch(op) {
-        case UCLsr:
+        case expr::UCLsr:
             return opcst_un_lsr;
-        case UCLsl:
+        case expr::UCLsl:
             return opcst_un_lsl;
-        case UCAsr:
+        case expr::UCAsr:
             return opcst_un_asr;
     }
     throw UnimplementedOperator();

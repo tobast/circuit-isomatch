@@ -66,9 +66,9 @@ CircuitGroup* doParse(FILE* in) {
     parseTools::ListElem<string>* strlist_val;
     parseTools::ListElem<CircuitTree*>* circtreelist_val;
     parseTools::ExprConstruction exprconstruction_val;
-    ExpressionBinOperator binop_val;
-    ExpressionUnOperator unop_val;
-    ExpressionUnOperatorCst unopcst_val;
+    expr::ExpressionBinOperator binop_val;
+    expr::ExpressionUnOperator unop_val;
+    expr::ExpressionUnOperatorCst unopcst_val;
 }
 
 %token OP_AND OP_OR OP_XOR OP_ADD OP_SUB OP_MUL OP_DIV OP_MOD
@@ -263,22 +263,22 @@ expr:
 
 
 binop:
-     OP_AND             { $$ = BAnd; }
-   | OP_OR              { $$ = BOr; }
-   | OP_XOR             { $$ = BXor; }
-   | OP_ADD             { $$ = BAdd; }
-   | OP_SUB             { $$ = BSub; }
-   | OP_MUL				{ $$ = BMul; }
-   | OP_DIV				{ $$ = BDiv; }
-   | OP_MOD				{ $$ = BMod; }
-   | OP_LSR				{ $$ = BLsr; }
-   | OP_LSL				{ $$ = BLsl; }
-   | OP_ASR				{ $$ = BAsr; }
+     OP_AND             { $$ = expr::BAnd; }
+   | OP_OR              { $$ = expr::BOr; }
+   | OP_XOR             { $$ = expr::BXor; }
+   | OP_ADD             { $$ = expr::BAdd; }
+   | OP_SUB             { $$ = expr::BSub; }
+   | OP_MUL				{ $$ = expr::BMul; }
+   | OP_DIV				{ $$ = expr::BDiv; }
+   | OP_MOD				{ $$ = expr::BMod; }
+   | OP_LSR				{ $$ = expr::BLsr; }
+   | OP_LSL				{ $$ = expr::BLsl; }
+   | OP_ASR				{ $$ = expr::BAsr; }
 
 unop:
-    OP_NOT              { $$ = UNot; }
+    OP_NOT              { $$ = expr::UNot; }
 
 unopcst:
-    OP_CLSR             { $$ = UCLsr; }
-  | OP_CLSL             { $$ = UCLsl; }
-  | OP_CASR             { $$ = UCAsr; }
+    OP_CLSR             { $$ = expr::UCLsr; }
+  | OP_CLSL             { $$ = expr::UCLsl; }
+  | OP_CASR             { $$ = expr::UCAsr; }
