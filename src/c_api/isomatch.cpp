@@ -332,3 +332,23 @@ expr_handle build_expr_merge(expr_handle left, expr_handle right) {
 void free_expression(expr_handle expr) {
     delete exprOfHandle(expr);
 }
+
+// === Signature
+
+sig_t sign(circuit_handle circuit) {
+    try {
+        return circuitOfHandle(circuit)->sign();
+    } catch(const IsomError& e) {
+        handleError(e);
+        return 0;
+    }
+}
+
+sig_t sign_with_precision(circuit_handle circuit, unsigned precision_level) {
+    try {
+        return circuitOfHandle(circuit)->sign(precision_level);
+    } catch(const IsomError& e) {
+        handleError(e);
+        return 0;
+    }
+}
