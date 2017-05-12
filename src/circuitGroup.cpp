@@ -9,10 +9,8 @@ using namespace std;
 IOPin::IOPin(WireId* formal,
         WireId* actual,
         CircuitGroup* group) :
-    _formal(NULL), _actual(actual), _group(group)
-{
-    connect(formal);
-}
+    _formal(formal), _actual(actual), _group(group)
+{}
 
 IOPin::IOPin(std::string formalName, WireId* actual, CircuitGroup* group) :
     _formal(NULL), _formalName(formalName), _actual(actual), _group(group)
@@ -22,7 +20,11 @@ void IOPin::connect(WireId* formal) {
     if(_formal != NULL)
         throw IOPin::AlreadyConnected();
     _formal = formal;
-    formal->connect(this, _actual);
+    link();
+}
+
+void IOPin::link() {
+    _formal->connect(this, _actual);
 }
 
 void CircuitGroup::InnerIoIter::operator++() {
@@ -89,7 +91,10 @@ void CircuitGroup::addChild(CircuitTree* child) {
 
 void CircuitGroup::addInput(const IOPin& pin) {
     failIfFrozen();
-    grpInputs.push_back(new IOPin(pin));
+    IOPin* nPin = new IOPin(pin);
+    if(nPin->_formal != nullptr)
+        nPin->link();
+    grpInputs.push_back(nPin);
 }
 
 void CircuitGroup::addInput(const std::string& formal, WireId* actual) {
@@ -98,7 +103,10 @@ void CircuitGroup::addInput(const std::string& formal, WireId* actual) {
 
 void CircuitGroup::addOutput(const IOPin& pin) {
     failIfFrozen();
-    grpOutputs.push_back(new IOPin(pin));
+    IOPin* nPin = new IOPin(pin);
+    if(nPin->_formal != nullptr)
+        nPin->link();
+    grpOutputs.push_back(nPin);
 }
 
 void CircuitGroup::addOutput(const std::string& formal, WireId* actual) {

@@ -7,6 +7,8 @@
 #include "wireManager.h"
 #include "circuitTree.h"
 
+class CircuitGroup;
+
 /** Input/output pin for a `CircuitGroup` */
 class IOPin {
     public:
@@ -30,10 +32,14 @@ class IOPin {
         CircuitGroup* group() const { return _group; }
 
     private:
+        void link();
+
         WireId* _formal;
         std::string _formalName; /// Used if formal is not yet connected
         WireId* _actual;
         CircuitGroup* _group;
+
+        friend CircuitGroup;
 };
 
 
