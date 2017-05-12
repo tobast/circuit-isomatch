@@ -18,7 +18,8 @@ OBJS = \
 	   circuitDelay.o \
 	   circuitAssert.o \
 	   circuitComb.o \
-	   signatureConstants.o
+	   signatureConstants.o \
+	   c_api/isomatch.o
 
 ###############################################################################
 
