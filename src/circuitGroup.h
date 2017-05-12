@@ -178,6 +178,9 @@ class CircuitGroup : public CircuitTree {
         // Note: this cannot be `const`, since the `wireManager_` is muted
         // whenever one tries to allocate a wire.
 
+        /// Get the group's name
+        const std::string& name() const { return name_; }
+
         void toDot(std::basic_ostream<char>& out, int indent=0);
 
     protected:
@@ -187,7 +190,7 @@ class CircuitGroup : public CircuitTree {
     private:
         void setAncestor(CircuitTree* tree) const;
 
-        std::string name;
+        std::string name_;
 
         WireManager* wireManager_;
 

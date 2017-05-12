@@ -5,7 +5,7 @@ C = gcc
 CXX = g++
 CXXFLAGS = $(INCLUDE_PATH) -Wall -Wextra -O0 -g -std=c++14
 CFLAGS = $(INCLUDE_PATH) -Wall -Wextra -O0 -g -std=c11
-CLIBS = $(LIBPATH) -lisomatch
+CLIBS = $(LIBPATH) -lisomatch -lstdc++
 CXXLIBS = $(LIBPATH) -lisomatch
 LEX = flex
 YACC = bison

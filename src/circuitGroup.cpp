@@ -44,13 +44,13 @@ void CircuitGroup::InnerIoIter::innerIncr() {
 }
 
 CircuitGroup::CircuitGroup(const std::string& name) :
-    CircuitTree(), name(name)
+    CircuitTree(), name_(name)
 {
     wireManager_ = new WireManager();
 }
 
 CircuitGroup::CircuitGroup(const std::string& name, WireManager* manager) :
-    CircuitTree(), name(name), wireManager_(manager)
+    CircuitTree(), name_(name), wireManager_(manager)
 {}
 
 CircuitGroup::~CircuitGroup() {
@@ -130,7 +130,7 @@ const std::vector<IOPin*>& CircuitGroup::getOutputs() const {
 }
 
 void CircuitGroup::toDot(std::basic_ostream<char>& out, int indent) {
-    const string thisCirc = string("group_") + name + to_string(id());
+    const string thisCirc = string("group_") + name_ + to_string(id());
 
     if(ancestor() == NULL) {
         // Root group
@@ -143,7 +143,7 @@ void CircuitGroup::toDot(std::basic_ostream<char>& out, int indent) {
     }
     indent += 2;
     dotPrint::indent(out, indent)
-        << "graph[style=filled, splines=curved, label=\"" << name << "\"]\n";
+        << "graph[style=filled, splines=curved, label=\"" << name_ << "\"]\n";
 
     // Wires
     for(auto wire : wireManager()->wires()) {
