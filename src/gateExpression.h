@@ -62,6 +62,12 @@ struct ExpressionBase {
 
     /** Compute a signature for this expression */
     virtual sig_t sign() const = 0; // FIXME memoize?
+
+    /** Check whether two experessions are formally equal */
+    bool equals(const ExpressionBase& oth) const;
+
+    private:
+        virtual bool innerEqual(const ExpressionBase& oth) const = 0;
 };
 
 /** Integer constant (`ExprConst`) */
@@ -72,6 +78,9 @@ struct ExpressionConst : ExpressionBase {
     unsigned val;           ///< Numeric value
 
     virtual sig_t sign() const;
+
+    private:
+        virtual bool innerEqual(const ExpressionBase& oth) const;
 };
 
 /** End variable expression (`ExprVar`) */
@@ -81,6 +90,9 @@ struct ExpressionVar : ExpressionBase {
     int id;                 ///< Id of the input pin referred
 
     virtual sig_t sign() const;
+
+    private:
+        virtual bool innerEqual(const ExpressionBase& oth) const;
 };
 
 /** Binary operator expression (`ExprBinOp`) */
@@ -98,6 +110,9 @@ struct ExpressionBinOp : ExpressionBase {
     expr::ExpressionBinOperator op;       ///< Operator
 
     virtual sig_t sign() const;
+
+    private:
+        virtual bool innerEqual(const ExpressionBase& oth) const;
 };
 
 /** Unary operator expression (`ExprUnOp`) */
@@ -112,6 +127,9 @@ struct ExpressionUnOp : ExpressionBase {
     expr::ExpressionUnOperator op;  ///< Operator
 
     virtual sig_t sign() const;
+
+    private:
+        virtual bool innerEqual(const ExpressionBase& oth) const;
 };
 
 /** Unary operator with constant (`ExprUnOpCst`) */
@@ -129,6 +147,9 @@ struct ExpressionUnOpCst : ExpressionBase {
     expr::ExpressionUnOperatorCst op;   ///< Operator
 
     virtual sig_t sign() const;
+
+    private:
+        virtual bool innerEqual(const ExpressionBase& oth) const;
 };
 
 /** Take a subword out of a word (`ExprSlice`) */
@@ -144,6 +165,9 @@ struct ExpressionSlice : ExpressionBase {
     unsigned end;           ///< Last index (exclusive) of the subword
 
     virtual sig_t sign() const;
+
+    private:
+        virtual bool innerEqual(const ExpressionBase& oth) const;
 };
 
 /** Concatenate two words (`ExprMerge`) */
@@ -158,4 +182,7 @@ struct ExpressionMerge : ExpressionBase {
     ExpressionBase *left, *right;
 
     virtual sig_t sign() const;
+
+    private:
+        virtual bool innerEqual(const ExpressionBase& oth) const;
 };

@@ -214,6 +214,12 @@ sig_t CircuitGroup::innerSignature() const {
             + subsigs);
 }
 
+bool CircuitGroup::innerEqual(const CircuitTree* othTree) const {
+    const CircuitGroup* oth = dynamic_cast<const CircuitGroup*>(othTree);
+    (void)oth; // FIXME unused
+    return false; // FIXME placeholder -- to implement
+}
+
 /** Computes (base ** exp) % mod through quick exponentiation */
 static uint64_t expmod(uint64_t base, uint64_t exp, uint64_t mod) {
     if(exp <= 1)

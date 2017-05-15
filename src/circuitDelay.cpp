@@ -27,6 +27,10 @@ sig_t CircuitDelay::innerSignature() const {
             (circType() << 16) + (1 << 8) + 1);
 }
 
+bool CircuitDelay::innerEqual(const CircuitTree*) const {
+    return true; // No inner data
+}
+
 void CircuitDelay::toDot(std::basic_ostream<char>& out, int indent) {
     const string thisCirc = string("delay_") + to_string(id());
 

@@ -68,6 +68,7 @@ class CircuitAssert : public CircuitTree {
 
     protected:
         virtual sig_t innerSignature() const;
+        virtual bool innerEqual(const CircuitTree* othTree) const;
 
     private:
         std::string name;

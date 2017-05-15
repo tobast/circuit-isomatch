@@ -31,6 +31,12 @@ sig_t CircuitAssert::innerSignature() const {
             + gateExpr->sign());
 }
 
+bool CircuitAssert::innerEqual(const CircuitTree* othTree) const {
+    const CircuitAssert* oth = dynamic_cast<const CircuitAssert*>(othTree);
+    return gateInputs.size() == oth->gateInputs.size()
+        && gateExpr->equals(*oth->gateExpr);
+}
+
 void CircuitAssert::toDot(std::basic_ostream<char>& out, int indent) {
     const string thisCirc = string("assert_") + to_string(id());
 

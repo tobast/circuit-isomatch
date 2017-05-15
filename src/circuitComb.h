@@ -78,6 +78,7 @@ class CircuitComb : public CircuitTree {
 
     protected:
         virtual sig_t innerSignature() const;
+        virtual bool innerEqual(const CircuitTree* othTree) const;
 
     private:
         std::vector<WireId*> gateInputs, gateOutputs;

@@ -27,6 +27,13 @@ sig_t CircuitTree::sign(int level) {
     return signature;
 }
 
+bool CircuitTree::equals(const CircuitTree* oth) const {
+    failIfNotFrozen();
+    if(circType() != oth->circType())
+        return false;
+    return innerEqual(oth);
+}
+
 sig_t CircuitTree::computeSignature(int level) {
     // Depends only on the gate's type and contents.
     sig_t inner = innerSignature();

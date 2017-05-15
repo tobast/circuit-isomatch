@@ -28,6 +28,10 @@ sig_t CircuitTristate::innerSignature() const {
             (circType() << 16) + (1 << 8) + 1);
 }
 
+bool CircuitTristate::innerEqual(const CircuitTree*) const {
+    return true; // No inner data
+}
+
 void CircuitTristate::toDot(std::basic_ostream<char>& out, int indent) {
     const string thisCirc = string("tri_") + to_string(id());
 

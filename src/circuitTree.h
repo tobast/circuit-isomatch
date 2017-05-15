@@ -111,7 +111,14 @@ class CircuitTree {
          * @param level Defines the signature level used. Lower means cheaper,
          * but also less precise.
          */
-         sig_t sign(int level=2);
+        sig_t sign(int level=2);
+
+        /**
+         * Checks whether this circuit is formally equal to its argument, wrt.
+         * permutations, names, etc. This does not take into account the gate's
+         * I/O, but only its internal structure.
+         */
+        bool equals(const CircuitTree* oth) const;
 
         /**
          * Freezes the circuit forever: any function modifying its structure
@@ -167,6 +174,10 @@ class CircuitTree {
         /** Computes the inner signature of a gate. This should be
          * reimplemented for every gate type. */
         virtual sig_t innerSignature() const = 0;
+
+        /** Computes the actual equality of two gates, assumed of the same type
+         */
+        virtual bool innerEqual(const CircuitTree* othTree) const = 0;
 
         /**
          * Checks whether the circuit is frozen, and fails with `Frozen` if it

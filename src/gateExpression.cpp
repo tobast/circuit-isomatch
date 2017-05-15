@@ -108,3 +108,49 @@ sig_t ExpressionSlice::sign() const {
 sig_t ExpressionMerge::sign() const {
     return opcst_merge(left->sign() - right->sign());
 }
+
+bool ExpressionBase::equals(const ExpressionBase& oth) const {
+    if(type != oth.type)
+        return false;
+    return innerEqual(oth);
+}
+
+bool ExpressionConst::innerEqual(const ExpressionBase& oth) const {
+    const ExpressionConst& o = dynamic_cast<const ExpressionConst&>(oth);
+    return val == o.val;
+}
+
+bool ExpressionVar::innerEqual(const ExpressionBase& oth) const {
+    const ExpressionVar& o = dynamic_cast<const ExpressionVar&>(oth);
+    return id == o.id;
+}
+
+bool ExpressionBinOp::innerEqual(const ExpressionBase& oth) const {
+    const ExpressionBinOp& o = dynamic_cast<const ExpressionBinOp&>(oth);
+    return op == o.op
+        && left->equals(*o.left)
+        && right->equals(*o.right);
+}
+
+bool ExpressionUnOp::innerEqual(const ExpressionBase& oth) const {
+    const ExpressionUnOp& o = dynamic_cast<const ExpressionUnOp&>(oth);
+    return op == o.op
+        && expr->equals(*o.expr);
+}
+
+bool ExpressionUnOpCst::innerEqual(const ExpressionBase& oth) const {
+    const ExpressionUnOpCst& o = dynamic_cast<const ExpressionUnOpCst&>(oth);
+    return op == o.op
+        && val == o.val
+        && expr->equals(*o.expr);
+}
+
+bool ExpressionSlice::innerEqual(const ExpressionBase& oth) const {
+    const ExpressionSlice& o = dynamic_cast<const ExpressionSlice&>(oth);
+    return beg == o.beg && end == o.end && expr->equals(*o.expr);
+}
+
+bool ExpressionMerge::innerEqual(const ExpressionBase& oth) const {
+    const ExpressionMerge& o = dynamic_cast<const ExpressionMerge&>(oth);
+    return left->equals(*o.left) && right->equals(*o.right);
+}

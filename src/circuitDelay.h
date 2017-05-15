@@ -59,6 +59,7 @@ class CircuitDelay : public CircuitTree {
 
     protected:
         virtual sig_t innerSignature() const;
+        virtual bool innerEqual(const CircuitTree* othTree) const;
 
     private:
         WireId *wireInput, *wireOutput;

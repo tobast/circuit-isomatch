@@ -50,6 +50,20 @@ sig_t CircuitComb::innerSignature() const {
             + exprsSum);
 }
 
+bool CircuitComb::innerEqual(const CircuitTree* othTree) const {
+    const CircuitComb* oth = dynamic_cast<const CircuitComb*>(othTree);
+    if(gateInputs.size() != oth->gateInputs.size()
+        || gateOutputs.size() != oth->gateOutputs.size()
+        || gateExprs.size() != oth->gateExprs.size())
+    {
+        return false;
+    }
+    for(size_t inp=0; inp < gateExprs.size(); ++inp)
+        if(!gateExprs[inp]->equals(*oth->gateExprs[inp]))
+            return false;
+    return true;
+}
+
 void CircuitComb::toDot(std::basic_ostream<char>& out, int indent) {
     const string thisCirc = string("delay_") + to_string(id());
 
@@ -68,4 +82,3 @@ void CircuitComb::toDot(std::basic_ostream<char>& out, int indent) {
                 "");
     }
 }
-
