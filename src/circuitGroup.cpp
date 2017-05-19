@@ -3,6 +3,12 @@
 #include "signatureConstants.h"
 #include <cassert>
 #include <cstdint>
+#include <set>
+#include <map>
+#include <unordered_map>
+#include <algorithm>
+
+#include "debug.h"
 
 using namespace std;
 
@@ -214,10 +220,308 @@ sig_t CircuitGroup::innerSignature() const {
             + subsigs);
 }
 
-bool CircuitGroup::innerEqual(const CircuitTree* othTree) const {
-    const CircuitGroup* oth = dynamic_cast<const CircuitGroup*>(othTree);
-    (void)oth; // FIXME unused
-    return false; // FIXME placeholder -- to implement
+namespace groupEquality {
+    class TooManyPermutations : public std::exception {};
+    class Permutation;
+
+    typedef vector<vector<CircuitTree*> > SigSplit;
+    typedef unordered_map<sig_t, set<CircuitTree*> > SigSplitMapped;
+
+    /// Computes k!
+    int factorial(int k);
+
+    /// Computes the signature of a wire with given accuracy
+    sig_t wireSignature(WireId* wire, int accuracy = -1);
+
+    /** Splits a set of circuits into sets of circuits with the same signatures
+     * @param circuits The wires to consider
+     * @param splitted A reference to the vector that will be filled
+     * @param maxPermutations Stop if the number of permutations exceeds this
+     *        parameter, and raise TooManyPermutations
+     * @param accuracy Level of accuracy of the signature function, or -1 for
+     *        the default value
+     */
+    void splitOnSig(const vector<CircuitTree*> circuits,
+            SigSplit& splitted,
+            int maxPermutations = -1,
+            int accuracy = -1);
+
+    /** Checks that both `fst` and `snd` have the same keys, and sets of equal
+     * sizes for each key. */
+    bool equalSizes(
+            const SigSplit& fst,
+            const SigSplit& snd);
+
+    bool equalWithPermutation(
+            const SigSplit& leftSplit, const SigSplit& rightSplit,
+            const Permutation& perm);
+
+    // ======
+
+    class Permutation {
+        public:
+            typedef vector<int> PermElem;
+
+            Permutation(const SigSplit& split) {
+                for(const auto& category : split) {
+                    perms.push_back(vector<int>(category.size()));
+                    mkIdentity(perms.back());
+                }
+                nextChange = lastIter();
+            }
+
+            const PermElem& operator[](sig_t index) const {
+                return perms.at(index);
+            }
+
+            /// Next "meta-permutation"
+            bool next() {
+                while(!next_permutation(nextChange->begin(),
+                            nextChange->end()))
+                {
+                    if(nextChange == perms.begin())
+                        return false; // Last permutation
+                    --nextChange;
+                }
+                nextChange = lastIter();
+                return true;
+            }
+
+        private:
+            typedef vector<PermElem> PermStruct;
+
+            inline void mkIdentity(vector<int>& vect) {
+                int n=0;
+                generate(vect.begin(), vect.end(), [&n]{ return n++; });
+            }
+            inline PermStruct::iterator lastIter() {
+                return --(perms.end());
+            }
+
+            PermStruct perms;
+            PermStruct::iterator nextChange;
+    };
+
+    int factorial(int k) {
+        static vector<int> memoized {1, 1};
+        for(int nextVal = (int)memoized.size(); nextVal <= k; ++nextVal)
+            memoized.push_back(memoized.back() * nextVal);
+        return memoized[k];
+    }
+
+    sig_t wireSignature(WireId* wire, int accuracy) {
+        sig_t outSig = 0;
+        for(auto circ = wire->adjacent_begin();
+                circ != wire->adjacent_end();
+                ++circ)
+        {
+            if(accuracy < 0)
+                outSig ^= (*circ)->sign();
+            else
+                outSig ^= (*circ)->sign(accuracy);
+        }
+
+        return outSig;
+    }
+
+    void splitOnSig(const vector<CircuitTree*> circuits,
+            SigSplit& splitted,
+            int maxPermutations,
+            int accuracy)
+    {
+        splitted.clear();
+
+        map<sig_t, set<CircuitTree*> > wipSplit;
+
+        for(auto circ : circuits) {
+            sig_t sig = accuracy >= 0 ? circ->sign(accuracy) : circ->sign();
+            wipSplit[sig].insert(circ);
+
+            if(maxPermutations >= 0
+                    && factorial(wipSplit[sig].size()) > maxPermutations)
+            {
+                // Keep it simple: the threshold will be low anyway, and we do
+                // not want to divide anything here, it must be fast.
+                throw TooManyPermutations();
+            }
+        }
+
+        splitted.reserve(wipSplit.size());
+        for(const auto& assoc : wipSplit) { // Order is deterministic
+            splitted.push_back(vector<CircuitTree*>());
+            splitted.back().reserve(assoc.second.size());
+            for(const auto& circ : assoc.second)
+                splitted.back().push_back(circ);
+        }
+    }
+
+    bool equalSizes(
+            const SigSplit& fst,
+            const SigSplit& snd)
+    {
+        if(fst.size() != snd.size())
+            return false;
+
+        for(size_t pos = 0; pos < fst.size(); ++pos) {
+            if(fst[pos].size() != snd[pos].size())
+                return false;
+        }
+        return true;
+    }
+
+    bool equalWithPermutation(
+            const SigSplit& leftSplit, const SigSplit& rightSplit,
+            const Permutation& perm)
+    {
+        // NOTE: here, we assume that keys(leftSplit) == keys(rightSplit)
+
+        // Check sub-equality
+        for(size_t pos = 0 ; pos < leftSplit.size(); ++pos) {
+            const vector<int>& curPerm = perm[pos];
+            for(size_t circId = 0; circId < leftSplit[pos].size(); ++circId) {
+                if(!leftSplit[pos][circId]->equals(
+                            rightSplit[pos][curPerm[circId]]))
+                {
+                    EQ_DEBUG("Not sub-equal\n");
+                    return false;
+                }
+            }
+        }
+
+        // Check graph structure
+        unordered_map<WireId*, WireId*> lrWireMap;
+        /* This map ^ maps a left-hand WireId to a right-hand one. We want this
+         * map to be a bijection in order to have a graph isomorphism, so we
+         * simply have to walk through our nodes mapping, map wires in this map
+         * (and fail in case of conflict). This ensures the functionnal
+         * property (`f(x)` is unique). Then, checking that each `WireId*` has
+         * at most one occurrence in the right-hand side of the map ensures
+         * injectivity. Surjectivity is then guaranteed by the structure of the
+         * circuit itself and the pigeon-hole principle.
+         */
+        for(size_t pos = 0; pos < leftSplit.size(); ++pos) {
+            const vector<int>& curPerm = perm[pos];
+            for(size_t circId = 0; circId < leftSplit[pos].size(); ++circId) {
+                CircuitTree *left = leftSplit[pos][circId],
+                    *right = rightSplit[pos][curPerm[circId]];
+                CircuitTree::IoIter lWire = left->io_begin(),
+                    rWire = right->io_begin();
+                for(; lWire != left->io_end() /* rWire checked after */ ;
+                        ++lWire, ++rWire)
+                {
+                    if(rWire == right->io_end()) { // Prematurate end
+                        EQ_DEBUG("Bad wire count (<- %s)\n",
+                                (*lWire)->name().c_str());
+                        return false;
+                    }
+                    if(lrWireMap.find(*lWire) != lrWireMap.end()
+                            && *(lrWireMap[*lWire]) != **rWire)
+                    {
+                        EQ_DEBUG("Wire conflict %s -> {%s - %s}\n",
+                                (*lWire)->uniqueName().c_str(),
+                                lrWireMap.find(*lWire)->second->uniqueName().c_str(),
+                                (*rWire)->uniqueName().c_str());
+                        return false; // Wire conflict
+                    }
+
+                    lrWireMap[*lWire] = *rWire;
+                }
+                if(rWire != right->io_end()) { // Bad wire count
+                    EQ_DEBUG("Bad wire count (-> %s)\n",
+                            (*rWire)->name().c_str());
+                    return false;
+                }
+            }
+        }
+        unordered_set<WireId*> rightSide;
+        for(const auto& assoc : lrWireMap) {
+            if(rightSide.find(assoc.second) != rightSide.end()) {
+                EQ_DEBUG("Non injective\n");
+                return false; // Non-injective
+            }
+            rightSide.insert(assoc.second);
+        }
+
+        return true;
+    }
+}
+
+bool CircuitGroup::innerEqual(CircuitTree* othTree) {
+    CircuitGroup* oth = dynamic_cast<CircuitGroup*>(othTree);
+
+    // FIXME obscure constants
+    const int BASE_PRECISION = 2,
+              MAX_PRECISION = 15,
+              MAX_PERMUTATIONS = 4;
+
+    EQ_DEBUG("\t> Entering %s (has WM %lu) <\n",
+            name().c_str(), wireManager_->id());
+
+    groupEquality::SigSplit sigSplit[2];
+
+    for(int precision = BASE_PRECISION;
+            precision <= MAX_PRECISION;
+            ++precision)
+    {
+        int maxPermutations = (precision == MAX_PRECISION) ?
+            -1 : MAX_PERMUTATIONS;
+
+        try {
+            // use the const version of `getChildren`
+            const vector<CircuitTree*>& lChildren =
+                static_cast<const CircuitGroup*>(this)->getChildren();
+            const vector<CircuitTree*>& rChildren =
+                static_cast<const CircuitGroup*>(oth)->getChildren();
+
+            groupEquality::splitOnSig(lChildren, sigSplit[0],
+                    maxPermutations, precision);
+            groupEquality::splitOnSig(rChildren, sigSplit[1],
+                    maxPermutations, precision);
+        } catch(const groupEquality::TooManyPermutations&) {
+            continue;
+        }
+        if(!groupEquality::equalSizes(sigSplit[0], sigSplit[1]))
+            return false;
+
+        // TODO split again on adjacent wires' signatures
+
+        if(maxPermutations >= 0) {
+            // Check if we have too many permutations -- for real this time
+            int perms = 1;
+            for(const auto& assoc : sigSplit[0])
+                perms *= groupEquality::factorial(assoc.size());
+            if(perms > maxPermutations)
+                continue; // Increase the precision
+            else {
+                EQ_DEBUG("Trying %d permutations (prec. %d)\n",
+                        perms, precision); // FIXME
+            }
+        }
+
+        // Now try all the remaining permutations.
+        // TODO some clever heuristic to enumerate the permutations in a clever
+        // order?
+
+        const groupEquality::SigSplit& leftSplit = sigSplit[0];;
+        const groupEquality::SigSplit& rightSplit = sigSplit[1];;
+        // Since `sigSplit` is not mutated from now on, we can safely rely on
+        // its ordering
+
+        groupEquality::Permutation perm(leftSplit);
+        do {
+            if(groupEquality::equalWithPermutation(
+                        leftSplit, rightSplit, perm))
+            {
+                EQ_DEBUG(">> Permutation (%s) OK\n", name().c_str());
+                return true;
+            }
+        } while(perm.next());
+        EQ_DEBUG(">> No permutation worked :c (%s)\n", name().c_str());
+        return false;
+    }
+
+    throw std::runtime_error("Reached end of CircuitGroup::innerEqual, please "
+            "submit a bugreport");
 }
 
 /** Computes (base ** exp) % mod through quick exponentiation */
