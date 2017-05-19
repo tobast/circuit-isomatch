@@ -28,7 +28,7 @@ sig_t CircuitTristate::innerSignature() const {
             (circType() << 16) + (1 << 8) + 1);
 }
 
-bool CircuitTristate::innerEqual(const CircuitTree*) const {
+bool CircuitTristate::innerEqual(CircuitTree*) {
     return true; // No inner data
 }
 

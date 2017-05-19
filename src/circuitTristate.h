@@ -62,7 +62,7 @@ class CircuitTristate : public CircuitTree {
 
     protected:
         virtual sig_t innerSignature() const;
-        virtual bool innerEqual(const CircuitTree* othTree) const;
+        virtual bool innerEqual(CircuitTree* othTree);
 
     private:
         WireId *wireInput, *wireOutput, *wireEnable;

@@ -27,7 +27,7 @@ sig_t CircuitTree::sign(int level) {
     return signature;
 }
 
-bool CircuitTree::equals(const CircuitTree* oth) const {
+bool CircuitTree::equals(CircuitTree* oth) {
     failIfNotFrozen();
     if(circType() != oth->circType())
         return false;

@@ -50,7 +50,7 @@ sig_t CircuitComb::innerSignature() const {
             + exprsSum);
 }
 
-bool CircuitComb::innerEqual(const CircuitTree* othTree) const {
+bool CircuitComb::innerEqual(CircuitTree* othTree) {
     const CircuitComb* oth = dynamic_cast<const CircuitComb*>(othTree);
     if(gateInputs.size() != oth->gateInputs.size()
         || gateOutputs.size() != oth->gateOutputs.size()

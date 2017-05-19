@@ -118,7 +118,7 @@ class CircuitTree {
          * permutations, names, etc. This does not take into account the gate's
          * I/O, but only its internal structure.
          */
-        bool equals(const CircuitTree* oth) const;
+        bool equals(CircuitTree* oth);
 
         /**
          * Freezes the circuit forever: any function modifying its structure
@@ -177,7 +177,7 @@ class CircuitTree {
 
         /** Computes the actual equality of two gates, assumed of the same type
          */
-        virtual bool innerEqual(const CircuitTree* othTree) const = 0;
+        virtual bool innerEqual(CircuitTree* othTree) = 0;
 
         /**
          * Checks whether the circuit is frozen, and fails with `Frozen` if it

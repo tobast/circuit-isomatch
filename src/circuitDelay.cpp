@@ -27,7 +27,7 @@ sig_t CircuitDelay::innerSignature() const {
             (circType() << 16) + (1 << 8) + 1);
 }
 
-bool CircuitDelay::innerEqual(const CircuitTree*) const {
+bool CircuitDelay::innerEqual(CircuitTree*) {
     return true; // No inner data
 }
 
