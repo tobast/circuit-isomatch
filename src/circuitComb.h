@@ -14,7 +14,7 @@ class CircuitComb : public CircuitTree {
             public:
                 InnerIoIter(const CircuitComb* circ, LowIter lowIter);
                 InnerIoIter(const InnerIoIter& it)
-                    : ptr(it.ptr) {}
+                    : ptr(it.ptr), circ(it.circ) {}
                 virtual void operator++();
                 virtual WireId* operator*() { return *ptr; }
                 virtual InnerIoIter* clone() const {
