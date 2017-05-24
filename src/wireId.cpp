@@ -59,6 +59,13 @@ bool WireId::operator==(const WireId& oth) const {
         && inner()->id == oth.inner()->id;
 }
 
+bool WireId::operator!=(WireId& oth) {
+    return !operator==(oth);
+}
+bool WireId::operator!=(const WireId& oth) const {
+    return !operator==(oth);
+}
+
 bool WireId::operator<(WireId& oth) {
     return (inner()->manager->id() < oth.inner()->manager->id())
         || (inner()->manager->id() == oth.inner()->manager->id()
@@ -138,6 +145,13 @@ void WireId::merge(WireId* other) {
         WireId* swap = kept;
         kept = merged;
         merged = swap;
+    }
+
+    // Merge names if one was auto-generated
+    if((kept->name().size() == 0 || kept->name()[0] == ' ')
+            && merged->name().size() > 0 && merged->name()[0] != ' ')
+    {
+        kept->inner()->name = merged->inner()->name;
     }
 
     delete merged->inner();

@@ -18,7 +18,6 @@ class WireManager;
 class IOPin;
 
 class WireId {
-    friend struct std::hash<WireId>;
 	public:
         /** Connection to an IO pin */
         struct PinConnection {
@@ -89,6 +88,11 @@ class WireId {
 		/** Id-based equality */
 		bool operator==(WireId& oth);
 
+        /// Id-based equality
+		bool operator!=(const WireId& oth) const;
+        /// Id-based equality
+		bool operator!=(WireId& oth);
+
 		/** Id-based comparaison */
 		bool operator<(const WireId& oth) const;
 
@@ -138,6 +142,8 @@ class WireId {
         /** Get this wire's display unique name */
         std::string uniqueName();
 
+        WireManager* manager() { return inner()->manager; } // FIXME DEBUG
+
 	private:
 
         void walkConnected(std::unordered_set<CircuitTree*>& curConnected,
@@ -167,6 +173,9 @@ class WireId {
         unsigned short ufDepth;
 
     friend WireManager; // set the wire's name
+    friend struct std::hash<WireId>;
+    friend struct std::hash<WireId*>;
+    friend struct HashWirePtr;
 };
 
 namespace std {
@@ -177,5 +186,19 @@ namespace std {
             return wire.inner()->id;
         }
     };
-}
 
+    template<> struct hash<WireId*> {
+        typedef WireId* argument_type;
+        typedef std::size_t result_type;
+        result_type operator()(const argument_type& wire) const {
+            return wire->inner()->id;
+        }
+    };
+
+    template<> struct equal_to<WireId*> {
+        bool operator()(const WireId* lhs, const WireId* rhs) const
+        {
+            return *lhs == *rhs;
+        }
+    };
+}
