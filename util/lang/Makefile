@@ -12,7 +12,7 @@ YACC = bison
 YACCFLAGS =
 
 PARSER = parser.y
-MAINS = dot sig
+MAINS = dot sig equal
 OBJS = aux.o parser.tab.o lexer.yy.o parseTools.o
 
 ##########################################################################
@@ -48,9 +48,9 @@ aux.o: aux.cpp parser.tab.hpp
 	$(YACC) $(YACCFLAGS) -d -o $(@:.hpp=.cpp) $<
 
 clean:
-	rm -rf *.bin *.o *.yy.{cpp,c} *.tab.{cpp,c,h,hpp}
+	rm -rf *.{c,}bin *.o *.yy.{cpp,c} *.tab.{cpp,c,h,hpp}
 
-test: sig.bin dot.bin capi.cbin
+test: sig.bin dot.bin capi.cbin equal.bin
 	./run_sigtests.py
 	./dot.bin circ/processor.circ > /dev/null
 	valgrind -q ./dot.bin circ/processor.circ > /dev/null
@@ -58,6 +58,8 @@ test: sig.bin dot.bin capi.cbin
 	valgrind -q ./sig.bin circ/processor.circ > /dev/null
 	./capi.cbin > /dev/null
 	valgrind -q ./capi.cbin > /dev/null
+	./equal.bin circ/processor.circ circ/processor.circ > /dev/null
+	valgrind -q ./equal.bin circ/processor.circ circ/processor.circ > /dev/null
 	@echo -e "\e[92m>> All tests passed! :)\e[0m"
 
 .PHONY: all build clean test
