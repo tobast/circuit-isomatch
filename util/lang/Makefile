@@ -1,12 +1,12 @@
-CHANGING_LIBS = ../../src/libisomatch.a
-LIBPATH = -L../../src
-INCLUDE_PATH = -I../../src
+CHANGING_LIBS = ../../src/libisomatch.a ../scramble/libscramble.a
+LIBPATH = -L../../src -L../scramble
+INCLUDE_PATH = -I../../src -I../scramble
 C = gcc
 CXX = g++
 CXXFLAGS = $(INCLUDE_PATH) -Wall -Wextra -O0 -g -std=c++14
 CFLAGS = $(INCLUDE_PATH) -Wall -Wextra -O0 -g -std=c11
 CLIBS = $(LIBPATH) -lisomatch -lstdc++
-CXXLIBS = $(LIBPATH) -lisomatch
+CXXLIBS = $(LIBPATH) -lscramble -lisomatch
 LEX = flex
 YACC = bison
 YACCFLAGS =
@@ -58,8 +58,8 @@ test: sig.bin dot.bin capi.cbin equal.bin
 	valgrind -q ./sig.bin circ/processor.circ > /dev/null
 	./capi.cbin > /dev/null
 	valgrind -q ./capi.cbin > /dev/null
-	./equal.bin circ/processor.circ circ/processor.circ > /dev/null
-	valgrind -q ./equal.bin circ/processor.circ circ/processor.circ > /dev/null
+	[ "$$(./equal.bin circ/processor.circ)" = "11" ]
+	valgrind -q ./equal.bin circ/processor.circ > /dev/null
 	@echo -e "\e[92m>> All tests passed! :)\e[0m"
 
 .PHONY: all build clean test
