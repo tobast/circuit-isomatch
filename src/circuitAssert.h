@@ -64,6 +64,9 @@ class CircuitAssert : public CircuitTree {
         /** Gate's expression */
         const ExpressionBase* expression() const { return gateExpr; }
 
+        /** Get gate's name */
+        const std::string name() const { return gateName; }
+
         void toDot(std::basic_ostream<char>& out, int indent=0);
 
     protected:
@@ -71,7 +74,7 @@ class CircuitAssert : public CircuitTree {
         virtual bool innerEqual(CircuitTree* othTree);
 
     private:
-        std::string name;
+        std::string gateName;
         std::vector<WireId*> gateInputs;
         ExpressionBase* gateExpr;
 };

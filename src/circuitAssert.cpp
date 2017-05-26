@@ -13,7 +13,7 @@ void CircuitAssert::InnerIoIter::operator++() {
 
 CircuitAssert::CircuitAssert(const std::string& name,
         ExpressionBase* expr) :
-    name(name), gateExpr(expr)
+    gateName(name), gateExpr(expr)
 {}
 
 CircuitAssert::~CircuitAssert() {

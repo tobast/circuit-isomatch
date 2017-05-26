@@ -139,6 +139,9 @@ class WireId {
         /** Get the name of this wire */
         const std::string& name() { return inner()->name; }
 
+        /** Get the name of this wire (const version) */
+        const std::string& name() const { return inner()->name; }
+
         /** Get this wire's display unique name */
         std::string uniqueName();
 
