@@ -86,10 +86,12 @@ void CircuitGroup::addChild(CircuitTree* child) {
     if(child->circType() == CIRC_GROUP) {
         CircuitGroup* grp = static_cast<CircuitGroup*>(child);
         for(auto inp : grp->getInputs()) {
-            inp->connect(wireManager_->wire(inp->formalName()));
+            if(inp->formal() == nullptr)
+                inp->connect(wireManager_->wire(inp->formalName()));
         }
         for(auto out : grp->getOutputs()) {
-            out->connect(wireManager_->wire(out->formalName()));
+            if(out->formal() == nullptr)
+                out->connect(wireManager_->wire(out->formalName()));
         }
     }
     grpChildren.push_back(child);
