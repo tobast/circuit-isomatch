@@ -1,5 +1,6 @@
+OPTS ?=
 CXX = g++
-CXXFLAGS = -O0 -g -Wall -Wextra -Werror -std=c++14
+CXXFLAGS = $(OPTS) -O0 -g -Wall -Wextra -Werror -std=c++14
 CXXLIBS =
 AR = ar
 DOXYGEN = doxygen
