@@ -147,6 +147,16 @@ void WireId::merge(WireId* other) {
         merged = swap;
     }
 
+    // Merge connected pins and circuits
+    kept->inner()->connected.insert(
+            kept->inner()->connected.end(),
+            merged->inner()->connected.begin(),
+            merged->inner()->connected.end());
+    kept->inner()->connectedPins.insert(
+            kept->inner()->connectedPins.end(),
+            merged->inner()->connectedPins.begin(),
+            merged->inner()->connectedPins.end());
+
     // Merge names if one was auto-generated
     if((kept->name().size() == 0 || kept->name()[0] == ' ')
             && merged->name().size() > 0 && merged->name()[0] != ' ')
