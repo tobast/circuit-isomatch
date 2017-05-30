@@ -35,18 +35,38 @@ namespace {
 
     // =================================================================
 
+    class RandChar {
+        public:
+            RandChar() {
+                random_device rd;
+                gen.seed(rd());
+            }
+
+            char operator()() {
+                int select = selector();
+                if(select < 26)
+                    return 'A' + select;
+                else if(select < 2*26)
+                    return 'a' + select - 26;
+                else
+                    return '0' + select - 26*2;
+            }
+
+        private:
+            int selector() {
+                static uniform_int_distribution<int> distr(0, 26*2+10-1);
+                return distr(gen);
+            }
+
+            default_random_engine gen;
+    };
+
     /** Returns a random string that can be used as a valid wire name */
     string randName(size_t length=12) {
-        static default_random_engine generator;
-        static uniform_int_distribution<int> distribution(0, 26*2+10-1);
-
+        static RandChar randChar;
         string out;
         for(size_t pos = 0; pos < length; ++pos) {
-            int selector = distribution(generator);
-            char randCh = (selector < 26*2) ?
-                ('A' + selector) :
-                ('0' + (selector - 26*2));
-            out += randCh;
+            out += randChar();
         }
         return out;
     }
@@ -59,7 +79,7 @@ namespace {
         WireId* mapped = nullptr;;
         if(mappedName == nameMap.end()) {
             string nName = randName() + string("_") + name;
-            nameMap[nName] = nName;
+            nameMap[name] = nName;
             mapped = manager->wire(nName);
         }
         else
