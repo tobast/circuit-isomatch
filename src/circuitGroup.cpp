@@ -238,6 +238,8 @@ namespace groupEquality {
     /** Splits a set of circuits into sets of circuits with the same signatures
      * @param circuits The wires to consider
      * @param splitted A reference to the vector that will be filled
+     * @param signatures Will be filled with the list of signatures of each
+     *        chunk from `splitted`
      * @param maxPermutations Stop if the number of permutations exceeds this
      *        parameter, and raise TooManyPermutations
      * @param accuracy Level of accuracy of the signature function, or -1 for
@@ -245,6 +247,7 @@ namespace groupEquality {
      */
     void splitOnSig(const vector<CircuitTree*> circuits,
             SigSplit& splitted,
+            std::vector<sig_t>& signatures,
             int maxPermutations = -1,
             int accuracy = -1);
 
@@ -328,10 +331,12 @@ namespace groupEquality {
 
     void splitOnSig(const vector<CircuitTree*> circuits,
             SigSplit& splitted,
+            std::vector<sig_t>& signatures,
             int maxPermutations,
             int accuracy)
     {
         splitted.clear();
+        signatures.clear();
 
         map<sig_t, set<CircuitTree*> > wipSplit;
 
@@ -349,7 +354,9 @@ namespace groupEquality {
         }
 
         splitted.reserve(wipSplit.size());
+        signatures.reserve(wipSplit.size());
         for(const auto& assoc : wipSplit) { // Order is deterministic
+            signatures.push_back(assoc.first);
             splitted.push_back(vector<CircuitTree*>());
             splitted.back().reserve(assoc.second.size());
             for(const auto& circ : assoc.second)
@@ -384,7 +391,9 @@ namespace groupEquality {
                 if(!leftSplit[pos][circId]->equals(
                             rightSplit[pos][curPerm[circId]]))
                 {
-                    EQ_DEBUG("Not sub-equal\n");
+                    EQ_DEBUG("Not sub-equal (types %d, %d)\n",
+                            leftSplit[pos][circId]->circType(),
+                            rightSplit[pos][curPerm[circId]]->circType());
                     return false;
                 }
             }
@@ -468,6 +477,7 @@ bool CircuitGroup::innerEqual(CircuitTree* othTree) {
         int maxPermutations = (precision == MAX_PRECISION) ?
             -1 : MAX_PERMUTATIONS;
 
+        vector<sig_t> leftSig, rightSig;
         try {
             // use the const version of `getChildren`
             const vector<CircuitTree*>& lChildren =
@@ -475,15 +485,28 @@ bool CircuitGroup::innerEqual(CircuitTree* othTree) {
             const vector<CircuitTree*>& rChildren =
                 static_cast<const CircuitGroup*>(oth)->getChildren();
 
-            groupEquality::splitOnSig(lChildren, sigSplit[0],
+            groupEquality::splitOnSig(lChildren, sigSplit[0], leftSig,
                     maxPermutations, precision);
-            groupEquality::splitOnSig(rChildren, sigSplit[1],
+            groupEquality::splitOnSig(rChildren, sigSplit[1], rightSig,
                     maxPermutations, precision);
         } catch(const groupEquality::TooManyPermutations&) {
             continue;
         }
-        if(!groupEquality::equalSizes(sigSplit[0], sigSplit[1]))
+
+        if(!groupEquality::equalSizes(sigSplit[0], sigSplit[1])) {
+            EQ_DEBUG(">> Mismatched signature sets' sizes\n");
             return false;
+        }
+        if(leftSig != rightSig) {
+            EQ_DEBUG(">> Mismatched signature sets\n");
+            for(size_t pos=0; pos < leftSig.size(); ++pos)
+                EQ_DEBUG("%lX (%d)\t", leftSig[pos], sigSplit[0][pos][0]->circType());
+            EQ_DEBUG("\n");
+            for(size_t pos=0; pos < rightSig.size(); ++pos)
+                EQ_DEBUG("%lX (%d)\t", rightSig[pos], sigSplit[1][pos][0]->circType());
+            EQ_DEBUG("\n");
+            return false;
+        }
 
         // TODO split again on adjacent wires' signatures
 
@@ -496,7 +519,7 @@ bool CircuitGroup::innerEqual(CircuitTree* othTree) {
                 continue; // Increase the precision
             else {
                 EQ_DEBUG("Trying %d permutations (prec. %d)\n",
-                        perms, precision); // FIXME
+                        perms, precision);
             }
         }
 
