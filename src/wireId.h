@@ -145,10 +145,7 @@ class WireId {
         /** Get this wire's display unique name */
         std::string uniqueName();
 
-        WireManager* manager() { return inner()->manager; } // FIXME DEBUG
-
 	private:
-
         void walkConnected(std::unordered_set<CircuitTree*>& curConnected,
                 std::unordered_set<WireId>& seenWires,
                 WireId* curWire);
