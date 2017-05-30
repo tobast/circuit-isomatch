@@ -20,6 +20,7 @@ OBJS = \
 	   circuitDelay.o \
 	   circuitAssert.o \
 	   circuitComb.o \
+	   groupEquality.o \
 	   signatureConstants.o \
 	   c_api/isomatch.o
 
