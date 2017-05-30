@@ -3,8 +3,9 @@ LIBPATH = -L../../src -L../scramble
 INCLUDE_PATH = -I../../src -I../scramble
 C = gcc
 CXX = g++
-CXXFLAGS = $(INCLUDE_PATH) -Wall -Wextra -O0 -g -std=c++14
-CFLAGS = $(INCLUDE_PATH) -Wall -Wextra -O0 -g -std=c11
+OPTFLAGS ?=
+CXXFLAGS = $(INCLUDE_PATH) $(OPTFLAGS) -Wall -Wextra -Werror -std=c++14
+CFLAGS = $(INCLUDE_PATH) $(OPTFLAGS) -Wall -Wextra -Werror -std=c11
 CLIBS = $(LIBPATH) -lisomatch -lstdc++
 CXXLIBS = $(LIBPATH) -lscramble -lisomatch
 LEX = flex
@@ -19,7 +20,15 @@ OBJS = aux.o parser.tab.o lexer.yy.o parseTools.o
 
 BINS = $(addsuffix .bin,$(MAINS))
 
-all: build test
+all: debug
+
+debug: OPTFLAGS += -O0 -g -DDEBUG
+debug: do-all
+
+release: OPTFLAGS += -O3
+release: do-all
+
+do-all: build test
 
 build: $(BINS)
 

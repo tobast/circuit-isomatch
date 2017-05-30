@@ -1,6 +1,7 @@
 OPTS ?=
 CXX = g++
-CXXFLAGS = $(OPTS) -O0 -g -Wall -Wextra -Werror -std=c++14
+OPTFLAGS ?=
+CXXFLAGS = $(OPTS) $(OPTFLAGS) -Wall -Wextra -Werror -std=c++14
 CXXLIBS =
 AR = ar
 DOXYGEN = doxygen
@@ -24,7 +25,16 @@ OBJS = \
 
 ###############################################################################
 
-all: $(TARGET) docs
+all: debug
+
+debug: OPTFLAGS += -O0 -g
+debug: CXXFLAGS += -DDEBUG_ALL
+debug: do-all
+
+release: OPTFLAGS += -O3
+release: do-all
+
+do-all: $(TARGET) docs
 
 $(TARGET): $(OBJS)
 	$(AR) rs $@ $^
