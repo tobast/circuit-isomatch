@@ -499,12 +499,6 @@ bool CircuitGroup::innerEqual(CircuitTree* othTree) {
         }
         if(leftSig != rightSig) {
             EQ_DEBUG(">> Mismatched signature sets\n");
-            for(size_t pos=0; pos < leftSig.size(); ++pos)
-                EQ_DEBUG("%lX (%d)\t", leftSig[pos], sigSplit[0][pos][0]->circType());
-            EQ_DEBUG("\n");
-            for(size_t pos=0; pos < rightSig.size(); ++pos)
-                EQ_DEBUG("%lX (%d)\t", rightSig[pos], sigSplit[1][pos][0]->circType());
-            EQ_DEBUG("\n");
             return false;
         }
 
