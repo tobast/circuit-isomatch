@@ -64,7 +64,7 @@ namespace {
     /** Returns a random string that can be used as a valid wire name */
     string randName(size_t length=12) {
         static RandChar randChar;
-        string out;
+        string out = "R";
         for(size_t pos = 0; pos < length; ++pos) {
             out += randChar();
         }
@@ -78,7 +78,12 @@ namespace {
         const auto mappedName = nameMap.find(name);
         WireId* mapped = nullptr;;
         if(mappedName == nameMap.end()) {
-            string nName = randName() + string("_") + name;
+            string randPart = randName();
+            string nName;
+            if(name.find(" _") == 0)
+                nName = string(" _") + randPart + name.substr(1);
+            else
+                nName = randPart + string("_") + name;
             nameMap[name] = nName;
             mapped = manager->wire(nName);
         }
@@ -173,7 +178,8 @@ namespace {
     CircuitGroup* scrambleGroup(CircuitGroup* orig, WireManager* manager,
             NameMap& nameMap)
     {
-        CircuitGroup* outGrp = new CircuitGroup(orig->name());
+        CircuitGroup* outGrp = new CircuitGroup(
+                randName() + string("_") + orig->name());
         WireManager* innerManager = outGrp->wireManager();
         NameMap innerNameMap;
 
@@ -264,7 +270,8 @@ namespace {
     CircuitAssert* scrambleAssert(CircuitAssert* orig, WireManager* manager,
             NameMap& nameMap)
     {
-        CircuitAssert* out = new CircuitAssert(orig->name(),
+        CircuitAssert* out = new CircuitAssert(
+                randName() + string("_") + orig->name(),
                 scrambleExpression(orig->expression()));
         for(const auto& input : orig->inputs())
             out->addInput(wire(input->name(), manager, nameMap));
