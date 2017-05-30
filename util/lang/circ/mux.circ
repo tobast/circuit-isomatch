@@ -1,0 +1,4 @@
+let mux (a, b, sel) -> (out) {
+    out = TRI a (NOT sel)
+    out = TRI b sel
+}
