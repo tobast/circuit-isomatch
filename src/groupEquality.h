@@ -66,4 +66,6 @@ namespace groupEquality {
     bool equalWithPermutation(
             const SigSplit& leftSplit, const SigSplit& rightSplit,
             const Permutation& perm);
+
+    bool equal(CircuitGroup* left, CircuitGroup* right);
 }

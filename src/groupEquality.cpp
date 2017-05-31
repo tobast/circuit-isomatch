@@ -3,6 +3,9 @@
 #include <algorithm>
 #include <map>
 
+#include "debug.h"
+#include "circuitGroup.h"
+
 using namespace std;
 
 namespace groupEquality {
@@ -185,5 +188,89 @@ namespace groupEquality {
         }
 
         return true;
+    }
+
+    bool equal(CircuitGroup* left, CircuitGroup* right) {
+        // FIXME obscure constants
+        const int BASE_PRECISION = 2,
+              MAX_PRECISION = 15,
+              MAX_PERMUTATIONS = 4;
+
+        EQ_DEBUG("\t> Entering %s <\n", left->name().c_str());
+
+        groupEquality::SigSplit sigSplit[2];
+
+        for(int precision = BASE_PRECISION;
+                precision <= MAX_PRECISION;
+                ++precision)
+        {
+            int maxPermutations = (precision == MAX_PRECISION) ?
+                -1 : MAX_PERMUTATIONS;
+
+            vector<sig_t> leftSig, rightSig;
+            try {
+                // use the const version of `getChildren`
+                const vector<CircuitTree*>& lChildren =
+                    static_cast<const CircuitGroup*>(left)->getChildren();
+                const vector<CircuitTree*>& rChildren =
+                    static_cast<const CircuitGroup*>(right)->getChildren();
+
+                groupEquality::splitOnSig(lChildren, sigSplit[0], leftSig,
+                        maxPermutations, precision);
+                groupEquality::splitOnSig(rChildren, sigSplit[1], rightSig,
+                        maxPermutations, precision);
+            } catch(const groupEquality::TooManyPermutations&) {
+                continue;
+            }
+
+            if(!groupEquality::equalSizes(sigSplit[0], sigSplit[1])) {
+                EQ_DEBUG(">> Mismatched signature sets' sizes\n");
+                return false;
+            }
+            if(leftSig != rightSig) {
+                EQ_DEBUG(">> Mismatched signature sets\n");
+                return false;
+            }
+
+            // TODO split again on adjacent wires' signatures
+
+            if(maxPermutations >= 0) {
+                // Check if we have too many permutations -- for real this time
+                int perms = 1;
+                for(const auto& assoc : sigSplit[0])
+                    perms *= groupEquality::factorial(assoc.size());
+                if(perms > maxPermutations)
+                    continue; // Increase the precision
+                else {
+                    EQ_DEBUG("Trying %d permutations (prec. %d)\n",
+                            perms, precision);
+                }
+            }
+
+            // Now try all the remaining permutations.
+            // TODO some clever heuristic to enumerate the permutations in a
+            // clever order?
+
+            const groupEquality::SigSplit& leftSplit = sigSplit[0];;
+            const groupEquality::SigSplit& rightSplit = sigSplit[1];;
+            // Since `sigSplit` is not mutated from now on, we can safely rely
+            // on its ordering
+
+            groupEquality::Permutation perm(leftSplit);
+            do {
+                if(groupEquality::equalWithPermutation(
+                            leftSplit, rightSplit, perm))
+                {
+                    EQ_DEBUG(">> Permutation (%s) OK\n", left->name().c_str());
+                    return true;
+                }
+            } while(perm.next());
+            EQ_DEBUG(">> No permutation worked :c (%s)\n",
+                    left->name().c_str());
+            return false;
+        }
+
+        throw std::runtime_error("Reached end of groupEquality::equal, please "
+                "submit a bugreport");
     }
 }

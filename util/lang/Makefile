@@ -71,4 +71,7 @@ test: sig.bin dot.bin capi.cbin equal.bin
 	valgrind -q ./equal.bin circ/processor.circ > /dev/null
 	@echo -e "\e[92m>> All tests passed! :)\e[0m"
 
+speed: equal.bin
+	time ./equal.bin circ/processor.circ > /dev/null
+
 .PHONY: all build clean test
