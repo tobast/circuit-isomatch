@@ -125,6 +125,9 @@ std::vector<CircuitTree*>& CircuitGroup::getChildren() {
 const std::vector<CircuitTree*>& CircuitGroup::getChildren() const {
     return grpChildren;
 }
+const std::vector<CircuitTree*>& CircuitGroup::getChildrenCst() const {
+    return static_cast<const CircuitGroup*>(this)->getChildren();
+}
 
 std::vector<IOPin*>& CircuitGroup::getInputs() {
     failIfFrozen();
@@ -140,6 +143,10 @@ std::vector<IOPin*>& CircuitGroup::getOutputs() {
 }
 const std::vector<IOPin*>& CircuitGroup::getOutputs() const {
     return grpOutputs;
+}
+
+std::vector<MatchResult> CircuitGroup::find(CircuitGroup* needle) {
+    return matchSubcircuit(needle, this);
 }
 
 void CircuitGroup::toDot(std::basic_ostream<char>& out, int indent) {

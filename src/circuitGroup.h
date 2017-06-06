@@ -6,6 +6,7 @@
 #include "wireId.h"
 #include "wireManager.h"
 #include "circuitTree.h"
+#include "subcircMatch.h"
 
 class CircuitGroup;
 
@@ -159,6 +160,9 @@ class CircuitGroup : public CircuitTree {
          */
         const std::vector<CircuitTree*>& getChildren() const;
 
+        /// Groups's subcircuits, const version
+        const std::vector<CircuitTree*>& getChildrenCst() const;
+
         /** Group's inputs, mutable.
          * Requires the group to be unfrozen.
          */
@@ -183,6 +187,13 @@ class CircuitGroup : public CircuitTree {
         WireManager* wireManager() { return wireManager_; }
         // Note: this cannot be `const`, since the `wireManager_` is muted
         // whenever one tries to allocate a wire.
+
+        /** Returns every match of `needle` found (recursively in the
+         * hierarchy) in this group. Two results will never be overlapping; if
+         * two overlapping subcircuits are matches, it is undefined which one
+         * will be returned.
+         */
+        std::vector<MatchResult> find(CircuitGroup* needle);
 
         /// Get the group's name
         const std::string& name() const { return name_; }
