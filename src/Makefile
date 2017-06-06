@@ -21,6 +21,7 @@ OBJS = \
 	   circuitAssert.o \
 	   circuitComb.o \
 	   groupEquality.o \
+	   subcircMatch.o \
 	   signatureConstants.o \
 	   c_api/isomatch.o
 
