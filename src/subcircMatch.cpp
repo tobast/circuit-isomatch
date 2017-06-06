@@ -5,6 +5,8 @@
 #include <stdexcept>
 #include <algorithm>
 
+#include "circuitGroup.h"
+
 using namespace std;
 
 namespace {
@@ -200,7 +202,7 @@ namespace {
              unordered_map<WireId*, WireId*>& edgeMap)
     {
         MatchResult res;
-        for(const auto& needlePart: fullNeedle->getChildren())
+        for(const auto& needlePart: fullNeedle->getChildrenCst())
             res.parts.push_back(nodeMap[needlePart]);
         for(const auto& inp: fullNeedle->getInputs())
             res.inputs.push_back(edgeMap[inp->actual()]);
@@ -357,7 +359,7 @@ namespace {
             }
         }
 
-        if(nodeMap.size() == fullNeedle->getChildren().size()) {
+        if(nodeMap.size() == fullNeedle->getChildrenCst().size()) {
             // Reached end of recursion - we have a full-size result
             if(isActualMatch(nodeMap, edgeMap, singleMatches)) {
                 results.push_back(buildMatchResult(
@@ -393,7 +395,7 @@ namespace {
         set<CircuitTree*> alreadyImplied;
 
         // Recurse in hierarchy
-        for(auto& child: haystack->getChildren()) {
+        for(auto& child: haystack->getChildrenCst()) {
             if(child->circType() == CircuitTree::CIRC_GROUP) {
                 size_t prevMatches = results.size();
                 findIn(results, needle, dynamic_cast<CircuitGroup*>(child));
@@ -408,9 +410,9 @@ namespace {
         // Fill single matches
         {
             unordered_map<sig_t, set<CircuitTree*> > signatures;
-            for(auto hayPart : haystack->getChildren())
+            for(auto hayPart : haystack->getChildrenCst())
                 signatures[hayPart->sign()].insert(hayPart);
-            for(auto needlePart : needle->getChildren())
+            for(auto needlePart : needle->getChildrenCst())
                 singleMatches[needlePart] = signatures[needlePart->sign()];
         }
 

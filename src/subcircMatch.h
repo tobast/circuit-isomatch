@@ -1,9 +1,10 @@
 #pragma once
 
 #include "circuitTree.h"
-#include "circuitGroup.h"
 
 #include <vector>
+
+class CircuitGroup;
 
 /** Result of a single circuit match */
 struct MatchResult {
