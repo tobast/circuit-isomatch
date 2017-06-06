@@ -13,7 +13,7 @@ YACC = bison
 YACCFLAGS =
 
 PARSER = parser.y
-MAINS = dot sig equal
+MAINS = dot sig equal find
 OBJS = aux.o parser.tab.o lexer.yy.o parseTools.o
 
 ##########################################################################
