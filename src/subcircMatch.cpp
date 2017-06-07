@@ -6,6 +6,7 @@
 #include <algorithm>
 
 #include "circuitGroup.h"
+#include "debug.h"
 
 using namespace std;
 

@@ -30,7 +30,7 @@ OBJS = \
 all: debug
 
 debug: OPTFLAGS += -O0 -g
-debug: CXXFLAGS += -DDEBUG_ALL
+debug: CXXFLAGS += -DDEBUG
 debug: do-all
 
 release: OPTFLAGS += -O3
