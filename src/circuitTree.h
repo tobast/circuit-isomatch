@@ -111,7 +111,7 @@ class CircuitTree {
          * @param level Defines the signature level used. Lower means cheaper,
          * but also less precise.
          */
-        sig_t sign(int level=2);
+        sign_t sign(int level=2);
 
         /**
          * Checks whether this circuit is formally equal to its argument, wrt.
@@ -169,11 +169,11 @@ class CircuitTree {
          * previously memoized.
          * You should call `sign` when overriding this function and needing a
          * lower-level signature of a block. */
-        virtual sig_t computeSignature(int level);
+        virtual sign_t computeSignature(int level);
 
         /** Computes the inner signature of a gate. This should be
          * reimplemented for every gate type. */
-        virtual sig_t innerSignature() const = 0;
+        virtual sign_t innerSignature() const = 0;
 
         /** Computes the actual equality of two gates, assumed of the same type
          */
@@ -192,7 +192,7 @@ class CircuitTree {
         void failIfNotFrozen() const;
 
         bool frozen;
-        std::vector<sig_t> memoSig;
+        std::vector<sign_t> memoSig;
 
         /** Group this circuit belongs to. This is automatically set. */
         CircuitGroup* ancestor_;

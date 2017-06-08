@@ -11,7 +11,7 @@
 
 namespace groupEquality {
     typedef std::vector<std::vector<CircuitTree*> > SigSplit;
-    typedef std::unordered_map<sig_t, std::set<CircuitTree*> > SigSplitMapped;
+    typedef std::unordered_map<sign_t, std::set<CircuitTree*> > SigSplitMapped;
 
     class TooManyPermutations : public std::exception {};
 
@@ -20,7 +20,7 @@ namespace groupEquality {
             typedef std::vector<int> PermElem;
 
             Permutation(const SigSplit& split);
-            const PermElem& operator[](sig_t index) const;
+            const PermElem& operator[](sign_t index) const;
 
             /// Next "meta-permutation"
             bool next();
@@ -39,7 +39,7 @@ namespace groupEquality {
     int factorial(int k);
 
     /// Computes the signature of a wire with given accuracy
-    sig_t wireSignature(WireId* wire, int accuracy = -1);
+    sign_t wireSignature(WireId* wire, int accuracy = -1);
 
     /** Splits a set of circuits into sets of circuits with the same signatures
      * @param circuits The wires to consider
@@ -53,7 +53,7 @@ namespace groupEquality {
      */
     void splitOnSig(const std::vector<CircuitTree*> circuits,
             SigSplit& splitted,
-            std::vector<sig_t>& signatures,
+            std::vector<sign_t>& signatures,
             int maxPermutations = -1,
             int accuracy = -1);
 

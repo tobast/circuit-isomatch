@@ -79,11 +79,11 @@ static const OperConstants& cstOf(expr::ExpressionUnOperatorCst op) {
     throw UnimplementedOperator();
 }
 
-sig_t ExpressionConst::sign() const {
+sign_t ExpressionConst::sign() const {
     return opcst_numconst(val);
 }
 
-sig_t ExpressionLongConst::sign() const {
+sign_t ExpressionLongConst::sign() const {
     uint32_t hashed = 0;
     for(size_t pos=0; pos < val.size(); pos += 16) {
         uint32_t cVal = 0;
@@ -106,30 +106,30 @@ sig_t ExpressionLongConst::sign() const {
     return opcst_longconst(hashed);
 }
 
-sig_t ExpressionVar::sign() const {
+sign_t ExpressionVar::sign() const {
     return opcst_wireid(id);
 }
 
-sig_t ExpressionBinOp::sign() const {
+sign_t ExpressionBinOp::sign() const {
     if(isCommutative(op))
         return cstOf(op)(left->sign() + right->sign());
     return cstOf(op)(left->sign() - right->sign());
 }
 
-sig_t ExpressionUnOp::sign() const {
+sign_t ExpressionUnOp::sign() const {
     return cstOf(op)(expr->sign());
 }
 
-sig_t ExpressionUnOpCst::sign() const {
+sign_t ExpressionUnOpCst::sign() const {
     return cstOf(op)(expr->sign() - opcst_cstint(val));
 }
 
-sig_t ExpressionSlice::sign() const {
+sign_t ExpressionSlice::sign() const {
     return opcst_slice(expr->sign()
             - opcst_slicebounds(end * sliceMulInner - beg));
 }
 
-sig_t ExpressionMerge::sign() const {
+sign_t ExpressionMerge::sign() const {
     return opcst_merge(left->sign() - right->sign());
 }
 

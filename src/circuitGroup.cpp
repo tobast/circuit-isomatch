@@ -198,7 +198,7 @@ void CircuitGroup::toDot(std::basic_ostream<char>& out, int indent) {
         << "}\n";
 }
 
-sig_t CircuitGroup::ioSigOf(WireId* wire) const {
+sign_t CircuitGroup::ioSigOf(WireId* wire) const {
     failIfNotFrozen();
     try {
         return ioSigs_.at(wire);
@@ -208,8 +208,8 @@ sig_t CircuitGroup::ioSigOf(WireId* wire) const {
     }
 }
 
-sig_t CircuitGroup::innerSignature() const {
-    sig_t subsigs = 0;
+sign_t CircuitGroup::innerSignature() const {
+    sign_t subsigs = 0;
     for(auto sub : grpChildren)
         subsigs += sub->sign();
     return signatureConstants::opcst_leaftype(
@@ -239,7 +239,7 @@ bool CircuitGroup::innerEqual(CircuitTree* othTree) {
         int maxPermutations = (precision == MAX_PRECISION) ?
             -1 : MAX_PERMUTATIONS;
 
-        vector<sig_t> leftSig, rightSig;
+        vector<sign_t> leftSig, rightSig;
         try {
             // use the const version of `getChildren`
             const vector<CircuitTree*>& lChildren =
@@ -315,11 +315,11 @@ static uint64_t expmod(uint64_t base, uint64_t exp, uint64_t mod) {
 
 /** Computes the I/O signature of a single wire, given the I/O pins it is
  * connected to. */
-static sig_t ioSigOfSet(const unordered_set<size_t>& set) {
+static sign_t ioSigOfSet(const unordered_set<size_t>& set) {
     static const uint32_t pinMod = signatureConstants::pinIdMod;
     auto valSig = [](size_t val) { return expmod(2, val, pinMod); };
 
-    sig_t out = 0;
+    sign_t out = 0;
     for(auto& val : set)
         out = (out + valSig(val)) % pinMod;
     return out;

@@ -22,7 +22,7 @@ extern "C" {
 /*****************************************************************************/
 /* Type declarations                                                         */
 /*****************************************************************************/
-typedef uint64_t sig_t;         ///< Type of a circuit signature
+typedef uint64_t sign_t;         ///< Type of a circuit signature
 typedef void* circuit_handle;   ///< Value representing a circuit
 typedef void* expr_handle;      ///< Value representing an expression
 typedef const char* wire_handle;    ///< A wire name
@@ -240,11 +240,11 @@ int free_expression(expr_handle expr);
 /*****************************************************************************/
 
 /** Computes a signature for the given circuit handle */
-sig_t sign(circuit_handle circuit);
+sign_t sign(circuit_handle circuit);
 
 /** Computes a signature for the given circuit handle with a precision level of
  * `precision_level` */
-sig_t sign_with_precision(circuit_handle circuit, unsigned precision_level);
+sign_t sign_with_precision(circuit_handle circuit, unsigned precision_level);
 
 /*****************************************************************************/
 /* Circuit matching                                                          */

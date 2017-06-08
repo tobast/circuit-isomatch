@@ -5,7 +5,7 @@
 #include <cstdint>
 
 /// Type of a gate/expression signature
-typedef uint64_t sig_t;
+typedef uint64_t sign_t;
 
 namespace signatureConstants {
     /**

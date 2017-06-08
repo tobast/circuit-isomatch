@@ -14,7 +14,7 @@ namespace groupEquality {
         nextChange = lastIter();
     }
 
-    const Permutation::PermElem& Permutation::operator[](sig_t index) const {
+    const Permutation::PermElem& Permutation::operator[](sign_t index) const {
         return perms.at(index);
     }
 
@@ -45,8 +45,8 @@ namespace groupEquality {
         return memoized[k];
     }
 
-    sig_t wireSignature(WireId* wire, int accuracy) {
-        sig_t outSig = 0;
+    sign_t wireSignature(WireId* wire, int accuracy) {
+        sign_t outSig = 0;
         for(auto circ = wire->adjacent_begin();
                 circ != wire->adjacent_end();
                 ++circ)
@@ -62,17 +62,17 @@ namespace groupEquality {
 
     void splitOnSig(const vector<CircuitTree*> circuits,
             SigSplit& splitted,
-            std::vector<sig_t>& signatures,
+            std::vector<sign_t>& signatures,
             int maxPermutations,
             int accuracy)
     {
         splitted.clear();
         signatures.clear();
 
-        map<sig_t, set<CircuitTree*> > wipSplit;
+        map<sign_t, set<CircuitTree*> > wipSplit;
 
         for(auto circ : circuits) {
-            sig_t sig = accuracy >= 0 ? circ->sign(accuracy) : circ->sign();
+            sign_t sig = accuracy >= 0 ? circ->sign(accuracy) : circ->sign();
             wipSplit[sig].insert(circ);
 
             if(maxPermutations >= 0

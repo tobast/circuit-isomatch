@@ -25,7 +25,7 @@ void CircuitAssert::addInput(WireId* wire) {
     gateInputs.push_back(wire);
 }
 
-sig_t CircuitAssert::innerSignature() const {
+sign_t CircuitAssert::innerSignature() const {
     return signatureConstants::opcst_leaftype(
             ((circType() << 16) | (gateInputs.size() << 8))
             + gateExpr->sign());

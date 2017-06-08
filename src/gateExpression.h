@@ -64,7 +64,7 @@ struct ExpressionBase {
     expr::ExpressionType type;    ///< Type of the expression (used for casts)
 
     /** Compute a signature for this expression */
-    virtual sig_t sign() const = 0; // FIXME memoize?
+    virtual sign_t sign() const = 0; // FIXME memoize?
 
     /** Check whether two experessions are formally equal */
     bool equals(const ExpressionBase& oth) const;
@@ -80,7 +80,7 @@ struct ExpressionConst : ExpressionBase {
 
     unsigned val;           ///< Numeric value
 
-    virtual sig_t sign() const;
+    virtual sign_t sign() const;
 
     private:
         virtual bool innerEqual(const ExpressionBase& oth) const;
@@ -101,7 +101,7 @@ struct ExpressionLongConst : ExpressionBase {
 
     std::string val;           ///< Numeric value
 
-    virtual sig_t sign() const;
+    virtual sign_t sign() const;
 
     private:
         virtual bool innerEqual(const ExpressionBase& oth) const;
@@ -113,7 +113,7 @@ struct ExpressionVar : ExpressionBase {
 
     int id;                 ///< Id of the input pin referred
 
-    virtual sig_t sign() const;
+    virtual sign_t sign() const;
 
     private:
         virtual bool innerEqual(const ExpressionBase& oth) const;
@@ -133,7 +133,7 @@ struct ExpressionBinOp : ExpressionBase {
     ExpressionBase *left, *right;
     expr::ExpressionBinOperator op;       ///< Operator
 
-    virtual sig_t sign() const;
+    virtual sign_t sign() const;
 
     private:
         virtual bool innerEqual(const ExpressionBase& oth) const;
@@ -150,7 +150,7 @@ struct ExpressionUnOp : ExpressionBase {
     ExpressionBase *expr;           ///< Sub-expression
     expr::ExpressionUnOperator op;  ///< Operator
 
-    virtual sig_t sign() const;
+    virtual sign_t sign() const;
 
     private:
         virtual bool innerEqual(const ExpressionBase& oth) const;
@@ -170,7 +170,7 @@ struct ExpressionUnOpCst : ExpressionBase {
     int val;                            ///< Constant associated
     expr::ExpressionUnOperatorCst op;   ///< Operator
 
-    virtual sig_t sign() const;
+    virtual sign_t sign() const;
 
     private:
         virtual bool innerEqual(const ExpressionBase& oth) const;
@@ -188,7 +188,7 @@ struct ExpressionSlice : ExpressionBase {
     unsigned beg;           ///< First index (inclusive) of the subword
     unsigned end;           ///< Last index (exclusive) of the subword
 
-    virtual sig_t sign() const;
+    virtual sign_t sign() const;
 
     private:
         virtual bool innerEqual(const ExpressionBase& oth) const;
@@ -205,7 +205,7 @@ struct ExpressionMerge : ExpressionBase {
 
     ExpressionBase *left, *right;
 
-    virtual sig_t sign() const;
+    virtual sign_t sign() const;
 
     private:
         virtual bool innerEqual(const ExpressionBase& oth) const;

@@ -39,8 +39,8 @@ void CircuitComb::addOutput(ExpressionBase* expr, WireId* wire) {
     gateExprs.push_back(expr);
 }
 
-sig_t CircuitComb::innerSignature() const {
-    sig_t exprsSum = 0;
+sign_t CircuitComb::innerSignature() const {
+    sign_t exprsSum = 0;
     for(auto expr : gateExprs)
         exprsSum ^= expr->sign();
 

@@ -61,7 +61,7 @@ class CircuitTristate : public CircuitTree {
         void toDot(std::basic_ostream<char>& out, int indent=0);
 
     protected:
-        virtual sig_t innerSignature() const;
+        virtual sign_t innerSignature() const;
         virtual bool innerEqual(CircuitTree* othTree);
 
     private:

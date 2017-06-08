@@ -23,7 +23,7 @@ CircuitTristate::CircuitTristate(WireId* from, WireId* to, WireId* enable) :
     enable->connect(this);
 }
 
-sig_t CircuitTristate::innerSignature() const {
+sign_t CircuitTristate::innerSignature() const {
     return signatureConstants::opcst_leaftype(
             (circType() << 16) + (1 << 8) + 1);
 }

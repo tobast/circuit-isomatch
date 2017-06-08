@@ -390,7 +390,7 @@ int free_expression(expr_handle expr) {
 
 // === Signature
 
-sig_t sign(circuit_handle circuit) {
+sign_t sign(circuit_handle circuit) {
     try {
         return circuitOfHandle(circuit)->sign();
     } catch(const IsomError& e) {
@@ -399,7 +399,7 @@ sig_t sign(circuit_handle circuit) {
     }
 }
 
-sig_t sign_with_precision(circuit_handle circuit, unsigned precision_level) {
+sign_t sign_with_precision(circuit_handle circuit, unsigned precision_level) {
     try {
         return circuitOfHandle(circuit)->sign(precision_level);
     } catch(const IsomError& e) {
