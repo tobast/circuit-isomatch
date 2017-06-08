@@ -4,6 +4,12 @@ TESTS_DIR = util/lang/
 all:
 	make -C $(SRC_DIR)
 
+debug:
+	make -C $(SRC_DIR) debug
+
+release:
+	make -C $(SRC_DIR) release
+
 docs:
 	make -C $(SRC_DIR) docs
 
