@@ -5,6 +5,7 @@
 #pragma once
 
 #include "signatureConstants.h"
+#include <string>
 
 namespace expr {
 
@@ -12,6 +13,7 @@ namespace expr {
     enum ExpressionType {
         ExprVar,        ///< End variable
         ExprConst,      ///< Integer constant
+        ExprLongConst,  ///< Long integer constant
         ExprBinOp,      ///< Binary operator (+, AND, ...)
         ExprUnOp,       ///< Unary operator (NOT, ...)
         ExprUnOpCst,    ///< Unary operator with constant (CstLSL, ...)
@@ -53,6 +55,7 @@ namespace expr {
 
 };
 
+class BadHex : public std::exception {};
 
 /** Base expression type, inherited by every "real" expression type */
 struct ExpressionBase {
@@ -76,6 +79,27 @@ struct ExpressionConst : ExpressionBase {
         : ExpressionBase(expr::ExprConst), val(val) {}
 
     unsigned val;           ///< Numeric value
+
+    virtual sig_t sign() const;
+
+    private:
+        virtual bool innerEqual(const ExpressionBase& oth) const;
+};
+
+/** Integer long constant (`ExprLongConst`) */
+struct ExpressionLongConst : ExpressionBase {
+    ExpressionLongConst(const std::string& val)
+        : ExpressionBase(expr::ExprConst), val(val)
+    {
+        for(const auto& ch: this->val) {
+            if(!('0' <= ch && ch <= '9')
+                    && !('a' <= ch && ch <= 'f')
+                    && !('A' <= ch && ch <= 'F'))
+                throw BadHex();
+        }
+    }
+
+    std::string val;           ///< Numeric value
 
     virtual sig_t sign() const;
 

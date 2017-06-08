@@ -92,6 +92,8 @@ const char* isom_strerror(isom_rc err_code) {
             return "this circuit handle has no parent group (see "
                 "`build_group_add_child`) and is required to have one in this "
                 "context. This applies eg. when you try to access a wire.";
+        case ISOM_RC_BADHEX:
+            return "the supplied hex string contains non-[0-9a-fA-F] char(s).";
         case ISOM_RC_ERROR:
         default:
             return "generic error, please submit a bug report";
@@ -290,6 +292,19 @@ circuit_handle build_tristate(circuit_handle parent,
 expr_handle build_expr_const(unsigned val) {
     try {
         return new ExpressionConst(val);
+    } catch(const IsomError& e) {
+        handleError(e);
+        return nullptr;
+    }
+}
+
+expr_handle build_expr_longconst(const char* value) {
+    try {
+        try {
+            return new ExpressionLongConst(value);
+        } catch(const BadHex&) {
+            throw IsomError(ISOM_RC_BADHEX);
+        }
     } catch(const IsomError& e) {
         handleError(e);
         return nullptr;

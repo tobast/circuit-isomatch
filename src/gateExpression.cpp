@@ -1,5 +1,6 @@
 #include "gateExpression.h"
 #include <exception>
+#include <stdexcept>
 
 using namespace signatureConstants;
 
@@ -82,6 +83,29 @@ sig_t ExpressionConst::sign() const {
     return opcst_numconst(val);
 }
 
+sig_t ExpressionLongConst::sign() const {
+    uint32_t hashed = 0;
+    for(size_t pos=0; pos < val.size(); pos += 16) {
+        uint32_t cVal = 0;
+        for(int subpos = 0; pos + subpos < val.size()
+                && subpos < 16; ++subpos)
+        {
+            char lVal = val[pos + subpos];
+            if('0' <= lVal && lVal <= '9')
+                lVal -= '0';
+            else if('a' <= lVal && lVal <= 'f')
+                lVal = lVal - 'a' + 10;
+            else if('A' <= lVal && lVal <= 'F')
+                lVal = lVal - 'A' + 10;
+            else
+                throw std::runtime_error("Bad hex (should not happen)");
+            cVal <<= 4;
+        }
+        hashed ^= cVal;
+    }
+    return opcst_longconst(hashed);
+}
+
 sig_t ExpressionVar::sign() const {
     return opcst_wireid(id);
 }
@@ -117,6 +141,12 @@ bool ExpressionBase::equals(const ExpressionBase& oth) const {
 
 bool ExpressionConst::innerEqual(const ExpressionBase& oth) const {
     const ExpressionConst& o = dynamic_cast<const ExpressionConst&>(oth);
+    return val == o.val;
+}
+
+bool ExpressionLongConst::innerEqual(const ExpressionBase& oth) const {
+    const ExpressionLongConst& o =
+        dynamic_cast<const ExpressionLongConst&>(oth);
     return val == o.val;
 }
 

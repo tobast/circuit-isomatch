@@ -48,6 +48,7 @@ namespace signatureConstants {
     const OperConstants opcst_cstint(3831503986u, 304930261u, 543302069u, 739263797u, 958652273u);
     const OperConstants opcst_wireid(2472436353u, 895959769u, 105554441u, 259819121u, 438174169u);
     const OperConstants opcst_numconst(1399781387u, 598999393u, 212481253u, 672017761u, 748863581u);
+    const OperConstants opcst_longconst(3376341841u, 858559253u, 669810637u, 653202269u, 653181341u);
     const OperConstants opcst_merge(2616661224u, 775975373u, 747472573u, 708846049u, 741751853u);
     const OperConstants opcst_slice(824635605u, 654813793u, 853789501u, 286822961u, 827230109u);
     const OperConstants opcst_slicebounds(70524680u, 444607909u, 848056189u, 509462321u, 700093841u);

@@ -12,6 +12,8 @@ namespace {
 
     ExpressionVar* scrambleExpressionVar(const ExpressionVar* expr);
     ExpressionConst* scrambleExpressionConst(const ExpressionConst* expr);
+    ExpressionLongConst* scrambleExpressionLongConst(
+            const ExpressionLongConst* expr);
     ExpressionBinOp* scrambleExpressionBinOp(const ExpressionBinOp* expr);
     ExpressionUnOp* scrambleExpressionUnOp(const ExpressionUnOp* expr);
     ExpressionUnOpCst* scrambleExpressionUnOpCst(
@@ -105,6 +107,12 @@ namespace {
         return new ExpressionConst(expr->val);
     }
 
+    ExpressionLongConst* scrambleExpressionLongConst(
+            const ExpressionLongConst* expr)
+    {
+        return new ExpressionLongConst(expr->val);
+    }
+
     ExpressionBinOp* scrambleExpressionBinOp(const ExpressionBinOp* expr) {
         return new ExpressionBinOp(
                 scrambleExpression(expr->left),
@@ -148,6 +156,9 @@ namespace {
             case expr::ExprConst:
                 return scrambleExpressionConst(
                         dynamic_cast<const ExpressionConst*>(expr));
+            case expr::ExprLongConst:
+                return scrambleExpressionLongConst(
+                        dynamic_cast<const ExpressionLongConst*>(expr));
             case expr::ExprBinOp:
                 return scrambleExpressionBinOp(
                         dynamic_cast<const ExpressionBinOp*>(expr));

@@ -23,6 +23,7 @@ operations = [
     'cstint',
     'wireid',
     'numconst',
+    'longconst',
     'merge',
     'slice',
     'slicebounds',
