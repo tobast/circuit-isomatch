@@ -20,15 +20,15 @@ namespace {
         public:
             typedef CircuitTree Val;
             WireOutPermutation(
-                    const unordered_map<sig_t, vector<Val*> >& sigMatches,
-                    const unordered_map<sig_t, int>& occursOfSig);
+                    const unordered_map<sign_t, vector<Val*> >& sigMatches,
+                    const unordered_map<sign_t, int>& occursOfSig);
             bool next();
-            Val* get(sig_t sig, int occur) const;
+            Val* get(sign_t sig, int occur) const;
 
         private:
-            const unordered_map<sig_t, vector<Val*> >& sigMatches;
-            const unordered_map<sig_t, int>& occursOfSig;
-            map<sig_t, vector<int> > perms;
+            const unordered_map<sign_t, vector<Val*> >& sigMatches;
+            const unordered_map<sign_t, int>& occursOfSig;
+            map<sign_t, vector<int> > perms;
     };
 
     bool walkMatchesNode(
@@ -48,7 +48,7 @@ namespace {
             /** Add a connection on this wire from a circuit of signature
              * `inSig`, from its `pin`-th pin, which is an input of the circuit
              * iff `in` is true. */
-            void connected(sig_t inSig, bool /* in */, int /* pin */) {
+            void connected(sign_t inSig, bool /* in */, int /* pin */) {
                 ++conns[ConnType(inSig, false, 0)];
                 // FIXME ^ use actual values
             }
@@ -80,7 +80,7 @@ namespace {
 
         private:
             struct ConnType {
-                ConnType(sig_t inSig, bool in, int pin) :
+                ConnType(sign_t inSig, bool in, int pin) :
                     inSig(inSig), in(in), pin(pin) {}
                 bool operator==(const ConnType& e) {
                     return inSig == e.inSig && in == e.in && pin == e.in;
@@ -92,7 +92,7 @@ namespace {
                         || (inSig == e.inSig && in == e.in && pin < e.in);
                 }
 
-                sig_t inSig;
+                sign_t inSig;
                 bool in;
                 int pin;
             };
@@ -225,8 +225,8 @@ namespace {
     }
 
     WireOutPermutation::WireOutPermutation(
-            const unordered_map<sig_t, vector<Val*> >& sigMatches,
-            const unordered_map<sig_t, int>& occursOfSig) :
+            const unordered_map<sign_t, vector<Val*> >& sigMatches,
+            const unordered_map<sign_t, int>& occursOfSig) :
         sigMatches(sigMatches), occursOfSig(occursOfSig)
     {
         for(const auto& occur: occursOfSig) {
@@ -248,7 +248,7 @@ namespace {
     }
 
     // NOTE: lets a `vector<>.at` exception escape on invalid `sig`.
-    WireOutPermutation::Val* WireOutPermutation::get(sig_t sig, int occur)
+    WireOutPermutation::Val* WireOutPermutation::get(sign_t sig, int occur)
         const
     {
         // A bit slower that what it could be, but much simpler that way
@@ -282,14 +282,14 @@ namespace {
 
         // Collect the `CircuitTree`s that are not connected yet in the match
         vector<CircuitTree*> missing;
-        unordered_map<sig_t, int> occursOfSig;
+        unordered_map<sign_t, int> occursOfSig;
         map<CircuitTree*, int> occurId;
         for(auto needleCirc = needleMatch->adjacent_begin();
                 needleCirc != needleMatch->adjacent_end();
                 ++needleCirc)
         {
             if(nodeMap.find(*needleCirc) == nodeMap.end()) {
-                sig_t signature = (*needleCirc)->sign();
+                sign_t signature = (*needleCirc)->sign();
                 missing.push_back(*needleCirc);
                 occurId[*needleCirc] = occursOfSig[signature]; // initially 0
                 ++occursOfSig[signature];
@@ -297,12 +297,12 @@ namespace {
         }
 
         // Build up lists of possible matches for each missing signature
-        unordered_map<sig_t, vector<CircuitTree*> > sigMatches;
+        unordered_map<sign_t, vector<CircuitTree*> > sigMatches;
         for(auto circ = match->adjacent_begin();
                 circ != match->adjacent_end();
                 ++circ)
         {
-            sig_t signature = (*circ)->sign();
+            sign_t signature = (*circ)->sign();
             if(occursOfSig.find(signature) != occursOfSig.end())
                 sigMatches[signature].push_back(*circ);
         }
@@ -433,7 +433,7 @@ namespace {
 
         // Fill single matches
         {
-            unordered_map<sig_t, set<CircuitTree*> > signatures;
+            unordered_map<sign_t, set<CircuitTree*> > signatures;
             for(auto hayPart : haystack->getChildrenCst())
                 signatures[hayPart->sign()].insert(hayPart);
             for(auto needlePart : needle->getChildrenCst()) {
@@ -444,7 +444,7 @@ namespace {
         // Fill wire connections -- computes "fitness" for given wire roles
         unordered_map<WireId*, WireFit> wireFit;
         for(const auto& needleMatch: singleMatches) {
-            sig_t cSig = needleMatch.first->sign();
+            sign_t cSig = needleMatch.first->sign();
             for(const auto& match: needleMatch.second) {
                 int pin = 0;
                 for(auto inp = match->inp_begin(); inp != match->inp_end();

@@ -207,7 +207,7 @@ namespace groupEquality {
             int maxPermutations = (precision == MAX_PRECISION) ?
                 -1 : MAX_PERMUTATIONS;
 
-            vector<sig_t> leftSig, rightSig;
+            vector<sign_t> leftSig, rightSig;
             try {
                 // use the const version of `getChildren`
                 const vector<CircuitTree*>& lChildren =
