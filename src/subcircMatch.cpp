@@ -37,7 +37,7 @@ namespace {
             CircuitTree* match,
             CircuitTree* needleMatch,
             set<CircuitTree*>& alreadyImplied,
-            unordered_map<CircuitTree*, set<CircuitTree*> >& singleMatches,
+            map<CircuitTree*, set<CircuitTree*> >& singleMatches,
             map<CircuitTree*, CircuitTree*>& nodeMap,
             unordered_map<WireId*, WireId*>& edgeMap);
 
@@ -107,6 +107,7 @@ namespace {
     bool isMatchFit(CircuitTree* match, CircuitTree* needleMatch,
             unordered_map<WireId*, WireFit>& wireFit)
     {
+        FIND_DEBUG(" > Checking fitness\n");
         auto wire = match->io_begin(),
         role = needleMatch->io_begin();
 
@@ -114,8 +115,10 @@ namespace {
                 && role != needleMatch->io_end();
                 ++wire, ++role)
         {
-            if(wireFit[*wire].fitFor(*role))
+            if(!wireFit[*wire].fitFor(*role)) {
+                FIND_DEBUG("  Not fit\n");
                 return false;
+            }
         }
         if(wire != match->io_end()
                 || role != needleMatch->io_end())
@@ -132,7 +135,7 @@ namespace {
     bool isActualMatch(
             map<CircuitTree*, CircuitTree*>& nodeMap,
             unordered_map<WireId*, WireId*>& edgeMap,
-            unordered_map<CircuitTree*, set<CircuitTree*> > singleMatches)
+            map<CircuitTree*, set<CircuitTree*> > singleMatches)
     {
         /* We have a few things to check here.
            (1) The nodes must be formally equal
@@ -142,6 +145,8 @@ namespace {
            (3) The nodes' and edges' map must be a bijective mapping, that is,
                we must ensure that not two keys map to the same value
         */
+
+        FIND_DEBUG(" > Checking a potential solution…\n");
 
         // (1)
         for(const auto& nodeMatch: nodeMap) {
@@ -155,20 +160,25 @@ namespace {
 
         // (2)
         for(const auto& nodeMatch: nodeMap) {
-            auto needlePin = nodeMatch.first->io_begin(),
-                 haystackPin = nodeMatch.second->io_begin();
-            for(; needlePin != nodeMatch.first->io_end()
-                    && haystackPin != nodeMatch.second->io_end() ;
-                    ++needlePin, ++haystackPin)
-            {
-                if(edgeMap[*needlePin] != *haystackPin)
-                    return false;
-            }
+            try{
+                auto needlePin = nodeMatch.first->io_begin(),
+                     haystackPin = nodeMatch.second->io_begin();
+                for(; needlePin != nodeMatch.first->io_end()
+                        && haystackPin != nodeMatch.second->io_end() ;
+                        ++needlePin, ++haystackPin)
+                {
+                    if(edgeMap.at(*needlePin) != *haystackPin)
+                        return false;
 
-            if(needlePin != nodeMatch.first->io_end()
-                    || haystackPin != nodeMatch.second->io_end())
-            {
-                return false; // mismatched pin number?!
+                }
+
+                if(needlePin != nodeMatch.first->io_end()
+                        || haystackPin != nodeMatch.second->io_end())
+                {
+                    return false; // mismatched pin number?!
+                }
+            } catch(const std::out_of_range&) {
+                return false; // One of the edgeMap lookups failed
             }
         }
 
@@ -192,6 +202,8 @@ namespace {
             }
         }
 
+        FIND_DEBUG(" > Found a match\n");
+
         // Everything is fine now!
         return true;
     }
@@ -206,9 +218,9 @@ namespace {
         for(const auto& needlePart: fullNeedle->getChildrenCst())
             res.parts.push_back(nodeMap[needlePart]);
         for(const auto& inp: fullNeedle->getInputs())
-            res.inputs.push_back(edgeMap[inp->actual()]);
+            res.inputs.push_back(edgeMap.at(inp->actual()));
         for(const auto& out: fullNeedle->getOutputs())
-            res.outputs.push_back(edgeMap[out->actual()]);
+            res.outputs.push_back(edgeMap.at(out->actual()));
         return res;
     }
 
@@ -261,7 +273,7 @@ namespace {
             WireId* match,
             WireId* needleMatch,
             set<CircuitTree*>& alreadyImplied,
-            unordered_map<CircuitTree*, set<CircuitTree*> >& singleMatches,
+            map<CircuitTree*, set<CircuitTree*> >& singleMatches,
             map<CircuitTree*, CircuitTree*>& nodeMap,
             unordered_map<WireId*, WireId*>& edgeMap)
     {
@@ -291,25 +303,27 @@ namespace {
                 ++circ)
         {
             sig_t signature = (*circ)->sign();
-            if(occursOfSig[signature] != 0)
+            if(occursOfSig.find(signature) != occursOfSig.end())
                 sigMatches[signature].push_back(*circ);
         }
 
         // Tries every possible permutation
         WireOutPermutation perm(sigMatches, occursOfSig);
         do {
+            FIND_DEBUG("   > Trying a permutation\n");
             for(const auto& circ: missing)
                 nodeMap[circ] = perm.get(circ->sign(), occurId[circ]);
 
-            for(auto circ = match->adjacent_begin();
-                    circ != match->adjacent_end();
-                    ++circ)
-            {
+            for(const auto& circ: missing) {
+                CircuitTree* matched = nodeMap[circ];
+                nodeMap.erase(circ); // It will be put back again
                 if(!walkMatchesNode(results, fullNeedle,
-                            nodeMap[*circ], *circ,
+                            matched, circ,
                             alreadyImplied, singleMatches,
                             nodeMap, edgeMap))
+                {
                     break;
+                }
             }
 
             for(const auto& circ: missing)
@@ -324,27 +338,35 @@ namespace {
             CircuitTree* match,
             CircuitTree* needleMatch,
             set<CircuitTree*>& alreadyImplied,
-            unordered_map<CircuitTree*, set<CircuitTree*> >& singleMatches,
+            map<CircuitTree*, set<CircuitTree*> >& singleMatches,
             map<CircuitTree*, CircuitTree*>& nodeMap,
             unordered_map<WireId*, WireId*>& edgeMap)
     {
-        if(nodeMap.find(needleMatch) != nodeMap.end()) // Already taken care of
-            return false;
+        if(nodeMap.find(needleMatch) != nodeMap.end()) { // Already taken care of
+            FIND_DEBUG("    Already mapped\n");
+            return nodeMap.find(needleMatch)->second == match;
+        }
 
-        if(alreadyImplied.find(match) != alreadyImplied.end())
+        if(alreadyImplied.find(match) != alreadyImplied.end()) {
+            FIND_DEBUG("    Implied in a match\n");
             return false;
+        }
 
         if(singleMatches[needleMatch].find(match)
-                == singleMatches[needleMatch].end())
+                == singleMatches[needleMatch].end()) {
+            FIND_DEBUG("    Not a match\n");
             return false;
+        }
 
         for(auto pin = match->io_begin(), needlePin = needleMatch->io_begin();
                 pin != match->io_end() && needlePin != needleMatch->io_end();
                 ++pin, ++needlePin)
         {
             try {
-                if(*edgeMap.at(*needlePin) != **pin)
+                if(*edgeMap.at(*needlePin) != **pin) {
+                    FIND_DEBUG("    Bad structure\n");
                     return false;
+                }
             } catch(const out_of_range&) {}
         }
 
@@ -354,12 +376,13 @@ namespace {
                 pin != match->io_end() && needlePin != needleMatch->io_end();
                 ++pin, ++needlePin)
         {
-            if(edgeMap.find(*needlePin) != edgeMap.end()) {
+            if(edgeMap.find(*needlePin) == edgeMap.end()) {
                 toUnassign.push_back(*needlePin);
                 edgeMap[*needlePin] = *pin;
             }
         }
 
+        FIND_DEBUG("  > So far, %lu\n", nodeMap.size());
         if(nodeMap.size() == fullNeedle->getChildrenCst().size()) {
             // Reached end of recursion - we have a full-size result
             if(isActualMatch(nodeMap, edgeMap, singleMatches)) {
@@ -406,15 +429,16 @@ namespace {
         }
 
 
-        unordered_map<CircuitTree*, set<CircuitTree*> > singleMatches;
+        map<CircuitTree*, set<CircuitTree*> > singleMatches;
 
         // Fill single matches
         {
             unordered_map<sig_t, set<CircuitTree*> > signatures;
             for(auto hayPart : haystack->getChildrenCst())
                 signatures[hayPart->sign()].insert(hayPart);
-            for(auto needlePart : needle->getChildrenCst())
+            for(auto needlePart : needle->getChildrenCst()) {
                 singleMatches[needlePart] = signatures[needlePart->sign()];
+            }
         }
 
         // Fill wire connections -- computes "fitness" for given wire roles
@@ -440,6 +464,17 @@ namespace {
             }
         }
 
+        FIND_DEBUG("=== IN %s ===\n", haystack->name().c_str());
+        bool found = false;
+        for(const auto& match: singleMatches) {
+            if(match.second.size() > 0) {
+                found = true;
+                FIND_DEBUG(" %lu", match.second.size());
+            }
+        }
+        if(found)
+            FIND_DEBUG(" sig matches\n");
+
         // Filter out the matches that are not connected as needed
         for(const auto& needleMatch: singleMatches) {
             set<CircuitTree*> nMatches;
@@ -447,8 +482,16 @@ namespace {
                 if(isMatchFit(match, needleMatch.first, wireFit))
                     nMatches.insert(match);
             }
-            singleMatches[needleMatch.first] = nMatches;
+            if(nMatches.size() > 0)
+                singleMatches[needleMatch.first] = nMatches;
+            else // lighten the data structure
+                singleMatches.erase(needleMatch.first);
         }
+
+        // Ensure there is at least enough matches for a full `needle`
+        for(const auto& child: needle->getChildrenCst())
+            if(singleMatches[child].empty())
+                return;
 
         // Pick the fewest matches
         CircuitTree* fewestMatchesNeedle = singleMatches.begin()->first;
