@@ -43,6 +43,10 @@ namespace {
 
     // ========================================================================
 
+    sign_t localSign(CircuitTree* circ) {
+        return circ->sign(0);
+    }
+
     class WireFit {
         public:
             /** Add a connection on this wire from a circuit of signature
@@ -64,7 +68,7 @@ namespace {
                     for(auto circ = role->adjacent_begin();
                             circ != role->adjacent_end(); ++circ)
                     {
-                        ConnType cConn((*circ)->sign(), false, 0);
+                        ConnType cConn(localSign(*circ), false, 0);
                         // FIXME ^ use actual values
 
                         ++usedConns[cConn];
@@ -154,6 +158,7 @@ namespace {
                 // Remember that this was not a match, after all.
                 singleMatches[nodeMatch.first].erase(
                         singleMatches[nodeMatch.first].find(nodeMatch.second));
+                FIND_DEBUG("  > Not sub-equal\n");
                 return false;
             }
         }
@@ -167,17 +172,25 @@ namespace {
                         && haystackPin != nodeMatch.second->io_end() ;
                         ++needlePin, ++haystackPin)
                 {
-                    if(edgeMap.at(*needlePin) != *haystackPin)
+                    if(*(edgeMap.at(*needlePin)) != **haystackPin) {
+                        FIND_DEBUG("%s ---> %s <> %s\n",
+                                (*needlePin)->name().c_str(),
+                                edgeMap.at(*needlePin)->name().c_str(),
+                                (*haystackPin)->name().c_str());
+                        FIND_DEBUG("  > Wires inconsistency\n");
                         return false;
+                    }
 
                 }
 
                 if(needlePin != nodeMatch.first->io_end()
                         || haystackPin != nodeMatch.second->io_end())
                 {
+                    FIND_DEBUG("  > Mismatched number of pins\n");
                     return false; // mismatched pin number?!
                 }
             } catch(const std::out_of_range&) {
+                FIND_DEBUG("  > Unmapped pin\n");
                 return false; // One of the edgeMap lookups failed
             }
         }
@@ -187,8 +200,10 @@ namespace {
         {
             set<CircuitTree*> seen;
             for(const auto& match: nodeMap) {
-                if(seen.find(match.second) != seen.end())
+                if(seen.find(match.second) != seen.end()) {
+                    FIND_DEBUG("  > Nodes non-injective\n");
                     return false;
+                }
                 seen.insert(match.second);
             }
         }
@@ -196,13 +211,15 @@ namespace {
         {
             unordered_set<WireId*> seen;
             for(const auto& match: edgeMap) {
-                if(seen.find(match.second) != seen.end())
+                if(seen.find(match.second) != seen.end()) {
+                    FIND_DEBUG("  > Wires non-injective\n");
                     return false;
+                }
                 seen.insert(match.second);
             }
         }
 
-        FIND_DEBUG(" > Found a match\n");
+        FIND_DEBUG("  > Found a match\n");
 
         // Everything is fine now!
         return true;
@@ -231,8 +248,11 @@ namespace {
     {
         for(const auto& occur: occursOfSig) {
             vector<int> permVal(sigMatches.at(occur.first).size(), -1);
-            if(occur.second < (int)permVal.size())
+            if(occur.second > (int)permVal.size()) {
+                FIND_DEBUG("@ Expecting < %d, has %ld\n",
+                        occur.second, permVal.size());
                 throw std::out_of_range("Not enough possible outputs");
+            }
             for(int pos = 0; pos < occur.second; ++pos)
                 permVal[pos] = pos;
             perms[occur.first] = permVal;
@@ -289,7 +309,7 @@ namespace {
                 ++needleCirc)
         {
             if(nodeMap.find(*needleCirc) == nodeMap.end()) {
-                sign_t signature = (*needleCirc)->sign();
+                sign_t signature = localSign(*needleCirc);
                 missing.push_back(*needleCirc);
                 occurId[*needleCirc] = occursOfSig[signature]; // initially 0
                 ++occursOfSig[signature];
@@ -302,7 +322,7 @@ namespace {
                 circ != match->adjacent_end();
                 ++circ)
         {
-            sign_t signature = (*circ)->sign();
+            sign_t signature = localSign(*circ);
             if(occursOfSig.find(signature) != occursOfSig.end())
                 sigMatches[signature].push_back(*circ);
         }
@@ -312,7 +332,7 @@ namespace {
         do {
             FIND_DEBUG("   > Trying a permutation\n");
             for(const auto& circ: missing)
-                nodeMap[circ] = perm.get(circ->sign(), occurId[circ]);
+                nodeMap[circ] = perm.get(localSign(circ), occurId[circ]);
 
             for(const auto& circ: missing) {
                 CircuitTree* matched = nodeMap[circ];
@@ -343,18 +363,18 @@ namespace {
             unordered_map<WireId*, WireId*>& edgeMap)
     {
         if(nodeMap.find(needleMatch) != nodeMap.end()) { // Already taken care of
-            FIND_DEBUG("    Already mapped\n");
+            FIND_DEBUG("    Already mapped ←\n");
             return nodeMap.find(needleMatch)->second == match;
         }
 
         if(alreadyImplied.find(match) != alreadyImplied.end()) {
-            FIND_DEBUG("    Implied in a match\n");
+            FIND_DEBUG("    Implied in a match ←\n");
             return false;
         }
 
         if(singleMatches[needleMatch].find(match)
                 == singleMatches[needleMatch].end()) {
-            FIND_DEBUG("    Not a match\n");
+            FIND_DEBUG("    Not a match ←\n");
             return false;
         }
 
@@ -364,7 +384,11 @@ namespace {
         {
             try {
                 if(*edgeMap.at(*needlePin) != **pin) {
-                    FIND_DEBUG("    Bad structure\n");
+                    FIND_DEBUG("    (%s --> %s <> %s\n",
+                            (*needlePin)->name().c_str(),
+                            (*pin)->name().c_str(),
+                            edgeMap.at(*needlePin)->name().c_str());
+                    FIND_DEBUG("    Bad structure ←\n");
                     return false;
                 }
             } catch(const out_of_range&) {}
@@ -435,16 +459,16 @@ namespace {
         {
             unordered_map<sign_t, set<CircuitTree*> > signatures;
             for(auto hayPart : haystack->getChildrenCst())
-                signatures[hayPart->sign()].insert(hayPart);
+                signatures[localSign(hayPart)].insert(hayPart);
             for(auto needlePart : needle->getChildrenCst()) {
-                singleMatches[needlePart] = signatures[needlePart->sign()];
+                singleMatches[needlePart] = signatures[localSign(needlePart)];
             }
         }
 
         // Fill wire connections -- computes "fitness" for given wire roles
         unordered_map<WireId*, WireFit> wireFit;
         for(const auto& needleMatch: singleMatches) {
-            sign_t cSig = needleMatch.first->sign();
+            sign_t cSig = localSign(needleMatch.first);
             for(const auto& match: needleMatch.second) {
                 int pin = 0;
                 for(auto inp = match->inp_begin(); inp != match->inp_end();
