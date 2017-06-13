@@ -2,6 +2,7 @@
 #include <map>
 #include <set>
 #include <unordered_map>
+#include <vector>
 #include <stdexcept>
 #include <algorithm>
 
@@ -19,6 +20,11 @@ namespace {
     class WireOutPermutation {
         public:
             typedef CircuitTree Val;
+#ifdef DEBUG_FIND
+            WireOutPermutation() : unconstructed(true) {}
+#else
+            WireOutPermutation() {}
+#endif
             WireOutPermutation(
                     const unordered_map<sign_t, vector<Val*> >& sigMatches,
                     const unordered_map<sign_t, int>& occursOfSig);
@@ -26,10 +32,20 @@ namespace {
             Val* get(sign_t sig, int occur) const;
 
         private:
-            const unordered_map<sign_t, vector<Val*> >& sigMatches;
-            const unordered_map<sign_t, int>& occursOfSig;
+            unordered_map<sign_t, vector<Val*> > sigMatches;
+            unordered_map<sign_t, int> occursOfSig;
             map<sign_t, vector<int> > perms;
+#ifdef DEBUG_FIND
+            bool unconstructed;
+#endif
     };
+
+    struct BtBreakpoint;
+
+    void execBreakpoint(vector<MatchResult>& results,
+            CircuitGroup* fullNeedle,
+            map<CircuitTree*, set<CircuitTree*> >& singleMatches,
+            vector<BtBreakpoint*>& breakpoints);
 
     bool walkMatchesNode(
             vector<MatchResult>& results,
@@ -39,7 +55,8 @@ namespace {
             set<CircuitTree*>& alreadyImplied,
             map<CircuitTree*, set<CircuitTree*> >& singleMatches,
             map<CircuitTree*, CircuitTree*>& nodeMap,
-            unordered_map<WireId*, WireId*>& edgeMap);
+            unordered_map<WireId*, WireId*>& edgeMap,
+            vector<BtBreakpoint*>& breakpoints);
 
     // ========================================================================
 
@@ -105,7 +122,28 @@ namespace {
             unordered_map<WireId*, bool> fitness;
     };
 
-    class FoundResult : public std::exception {
+    class FoundResult : public std::exception {};
+
+    class Backtrack : public std::exception {};
+
+    struct BtBreakpoint {
+        BtBreakpoint(WireId* match, WireId* needleMatch,
+                const set<CircuitTree*>& alreadyImplied,
+                const map<CircuitTree*, CircuitTree*>& nodeMap,
+                const unordered_map<WireId*, WireId*>& edgeMap)
+            : match(match), needleMatch(needleMatch),
+            alreadyImplied(alreadyImplied),
+            nodeMap(nodeMap), edgeMap(edgeMap),
+            wirePerm(), missing(), occurId()
+        {}
+
+        WireId *match, *needleMatch;
+        set<CircuitTree*> alreadyImplied;
+        map<CircuitTree*, CircuitTree*> nodeMap;
+        unordered_map<WireId*, WireId*> edgeMap;
+        WireOutPermutation wirePerm;
+        vector<CircuitTree*> missing;
+        map<CircuitTree*, int> occurId;
     };
 
     bool isMatchFit(CircuitTree* match, CircuitTree* needleMatch,
@@ -245,6 +283,9 @@ namespace {
             const unordered_map<sign_t, vector<Val*> >& sigMatches,
             const unordered_map<sign_t, int>& occursOfSig) :
         sigMatches(sigMatches), occursOfSig(occursOfSig)
+#ifdef DEBUG_FIND
+        , unconstructed(false)
+#endif
     {
         for(const auto& occur: occursOfSig) {
             vector<int> permVal(sigMatches.at(occur.first).size(), -1);
@@ -260,6 +301,10 @@ namespace {
     }
 
     bool WireOutPermutation::next() {
+#ifdef DEBUG_FIND
+        if(unconstructed)
+            throw std::runtime_error("WireOutPermutation not initialized");
+#endif
         for(auto& perm: perms) {
             if(next_permutation(perm.second.begin(), perm.second.end()))
                 return true;
@@ -271,6 +316,10 @@ namespace {
     WireOutPermutation::Val* WireOutPermutation::get(sign_t sig, int occur)
         const
     {
+#ifdef DEBUG_FIND
+        if(unconstructed)
+            throw std::runtime_error("WireOutPermutation not initialized");
+#endif
         // A bit slower that what it could be, but much simpler that way
         int elemPos = 0;
         for(const auto& elt: perms.at(sig)) {
@@ -295,15 +344,20 @@ namespace {
             set<CircuitTree*>& alreadyImplied,
             map<CircuitTree*, set<CircuitTree*> >& singleMatches,
             map<CircuitTree*, CircuitTree*>& nodeMap,
-            unordered_map<WireId*, WireId*>& edgeMap)
+            unordered_map<WireId*, WireId*>& edgeMap,
+            vector<BtBreakpoint*>& breakpoints)
     {
         // We do not have to check `edgeMap` here, it was taken care of in
         // `walkMatchesNode`.
 
+        // Create a breakpoint
+        BtBreakpoint* breakpt = new BtBreakpoint(
+                match, needleMatch, alreadyImplied, nodeMap, edgeMap);
+
         // Collect the `CircuitTree`s that are not connected yet in the match
-        vector<CircuitTree*> missing;
+        vector<CircuitTree*>& missing = breakpt->missing;
+        map<CircuitTree*, int>& occurId = breakpt->occurId;
         unordered_map<sign_t, int> occursOfSig;
-        map<CircuitTree*, int> occurId;
         for(auto needleCirc = needleMatch->adjacent_begin();
                 needleCirc != needleMatch->adjacent_end();
                 ++needleCirc)
@@ -314,6 +368,10 @@ namespace {
                 occurId[*needleCirc] = occursOfSig[signature]; // initially 0
                 ++occursOfSig[signature];
             }
+        }
+        if(missing.empty()) { // Nothing more to do here, recurse on.
+            delete breakpt;
+            return;
         }
 
         // Build up lists of possible matches for each missing signature
@@ -327,28 +385,63 @@ namespace {
                 sigMatches[signature].push_back(*circ);
         }
 
-        // Tries every possible permutation
-        WireOutPermutation perm(sigMatches, occursOfSig);
-        do {
-            FIND_DEBUG("   > Trying a permutation\n");
-            for(const auto& circ: missing)
-                nodeMap[circ] = perm.get(localSign(circ), occurId[circ]);
+        // Set the break point permutation
+        breakpt->wirePerm = WireOutPermutation(sigMatches, occursOfSig);
+        breakpoints.push_back(breakpt);
+        execBreakpoint(results, fullNeedle, singleMatches, breakpoints);
+    }
 
-            for(const auto& circ: missing) {
-                CircuitTree* matched = nodeMap[circ];
-                nodeMap.erase(circ); // It will be put back again
-                if(!walkMatchesNode(results, fullNeedle,
-                            matched, circ,
-                            alreadyImplied, singleMatches,
-                            nodeMap, edgeMap))
-                {
-                    break;
+    void execBreakpoint(vector<MatchResult>& results,
+            CircuitGroup* fullNeedle,
+            map<CircuitTree*, set<CircuitTree*> >& singleMatches,
+            vector<BtBreakpoint*>& breakpoints)
+    {
+        FIND_DEBUG("   > Backtracking\n");
+        // Copy, keep the breakpoint clean
+        BtBreakpoint breakpt = *(breakpoints.back());
+
+        // Update breakpoints' list
+        {
+            BtBreakpoint* origBp = breakpoints.back();
+                if(!origBp->wirePerm.next()) {
+                    delete origBp;
+                    breakpoints.pop_back();
+                    FIND_DEBUG("    > [backtrack point removed, rem. %lu]\n",
+                            breakpoints.size());
                 }
-            }
+        }
 
-            for(const auto& circ: missing)
-                nodeMap.erase(circ);
-        } while(perm.next());
+        bool suitable = true;
+        for(const auto& circ: breakpt.missing) {
+            if(singleMatches[circ].find(
+                        breakpt.wirePerm.get(localSign(circ),
+                            breakpt.occurId[circ]))
+                    == singleMatches[circ].end())
+            {
+                // Not suitable, let's not waste time
+                suitable = false;
+                break;
+            }
+        }
+        if(!suitable)
+            throw Backtrack();
+
+        for(const auto& circ: breakpt.missing)
+            breakpt.nodeMap[circ] =
+                breakpt.wirePerm.get(localSign(circ), breakpt.occurId[circ]);
+
+        for(const auto& circ: breakpt.missing) {
+            CircuitTree* matched = breakpt.nodeMap[circ];
+            breakpt.nodeMap.erase(circ); // It will be put back again
+            if(!walkMatchesNode(results, fullNeedle,
+                        matched, circ,
+                        breakpt.alreadyImplied, singleMatches,
+                        breakpt.nodeMap, breakpt.edgeMap,
+                        breakpoints))
+            {
+                throw Backtrack();
+            }
+        }
     }
 
     /// Walks the `match` graph, trying to build up the possible final matches
@@ -360,8 +453,14 @@ namespace {
             set<CircuitTree*>& alreadyImplied,
             map<CircuitTree*, set<CircuitTree*> >& singleMatches,
             map<CircuitTree*, CircuitTree*>& nodeMap,
-            unordered_map<WireId*, WireId*>& edgeMap)
+            unordered_map<WireId*, WireId*>& edgeMap,
+            vector<BtBreakpoint*>& breakpoints)
     {
+        FIND_DEBUG("  > So far, %lu (%s: %s ; %s: %s)\n", nodeMap.size()+1,
+                (*needleMatch->inp_begin())->name().c_str(),
+                (*match->inp_begin())->name().c_str(),
+                (*needleMatch->out_begin())->name().c_str(),
+                (*match->out_begin())->name().c_str());
         if(nodeMap.find(needleMatch) != nodeMap.end()) { // Already taken care of
             FIND_DEBUG("    Already mapped ←\n");
             return nodeMap.find(needleMatch)->second == match;
@@ -406,7 +505,6 @@ namespace {
             }
         }
 
-        FIND_DEBUG("  > So far, %lu\n", nodeMap.size());
         if(nodeMap.size() == fullNeedle->getChildrenCst().size()) {
             // Reached end of recursion - we have a full-size result
             if(isActualMatch(nodeMap, edgeMap, singleMatches)) {
@@ -425,7 +523,8 @@ namespace {
                     ++pin, ++needlePin)
             {
                 walkMatchesEdge(results, fullNeedle, *pin, *needlePin,
-                        alreadyImplied, singleMatches, nodeMap, edgeMap);
+                        alreadyImplied, singleMatches, nodeMap, edgeMap,
+                        breakpoints);
             }
         }
 
@@ -489,27 +588,23 @@ namespace {
         }
 
         FIND_DEBUG("=== IN %s ===\n", haystack->name().c_str());
-        bool found = false;
-        for(const auto& match: singleMatches) {
-            if(match.second.size() > 0) {
-                found = true;
-                FIND_DEBUG(" %lu", match.second.size());
-            }
-        }
-        if(found)
-            FIND_DEBUG(" sig matches\n");
 
         // Filter out the matches that are not connected as needed
-        for(const auto& needleMatch: singleMatches) {
-            set<CircuitTree*> nMatches;
-            for(const auto& match: needleMatch.second) {
-                if(isMatchFit(match, needleMatch.first, wireFit))
-                    nMatches.insert(match);
+        {
+            auto needleMatch = singleMatches.begin();
+            while(needleMatch != singleMatches.end()) {
+                set<CircuitTree*> nMatches;
+                for(const auto& match: needleMatch->second) {
+                    if(isMatchFit(match, needleMatch->first, wireFit))
+                        nMatches.insert(match);
+                }
+                if(nMatches.size() > 0) {
+                    singleMatches[needleMatch->first] = nMatches;
+                    ++needleMatch;
+                }
+                else // lighten the data structure
+                    needleMatch = singleMatches.erase(needleMatch);
             }
-            if(nMatches.size() > 0)
-                singleMatches[needleMatch.first] = nMatches;
-            else // lighten the data structure
-                singleMatches.erase(needleMatch.first);
         }
 
         // Ensure there is at least enough matches for a full `needle`
@@ -524,15 +619,26 @@ namespace {
                 fewestMatchesNeedle = match.first;
         }
 
+        FIND_DEBUG(" @ Using %d (%016lX) as start point\n",
+                fewestMatchesNeedle->circType(),
+                localSign(fewestMatchesNeedle));
+
         // Build the various possible matches
         for(auto& match: singleMatches[fewestMatchesNeedle]) {
             map<CircuitTree*, CircuitTree*> nodeMap;
             unordered_map<WireId*, WireId*> edgeMap;
+            vector<BtBreakpoint*> breakpoints;
 
             try {
                 walkMatchesNode(results, needle, match, fewestMatchesNeedle,
-                        alreadyImplied, singleMatches, nodeMap, edgeMap);
-            } catch(const FoundResult&) {}
+                        alreadyImplied, singleMatches, nodeMap, edgeMap,
+                        breakpoints);
+            } catch(const FoundResult&) {
+            } catch(const Backtrack&) {
+                if(!breakpoints.empty())
+                    execBreakpoint(results, needle,
+                            singleMatches, breakpoints);
+            }
         }
     }
 };
