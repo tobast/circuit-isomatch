@@ -3,8 +3,11 @@
 #include <set>
 #include <unordered_map>
 #include <vector>
+#include <list>
 #include <stdexcept>
 #include <algorithm>
+
+#include <setjmp.h>
 
 #include "circuitGroup.h"
 #include "debug.h"
@@ -40,12 +43,46 @@ namespace {
 #endif
     };
 
+    /// jmp_buf wrapper
+    class JmpBuf {
+        public:
+            JmpBuf() {
+                buf = (jmp_buf*)malloc(sizeof(jmp_buf));
+                // Malloc, because `new` seems to fail with `jmp_buf`.
+            };
+            JmpBuf(const JmpBuf&) = delete;
+            JmpBuf(JmpBuf&& e) {
+                buf = e.buf;
+                e.buf = nullptr;
+            }
+            ~JmpBuf() {
+                free(buf);
+            }
+            void operator=(const JmpBuf&) = delete;
+            JmpBuf& operator=(JmpBuf&& e) {
+                if(this != &e) {
+                    buf = e.buf;
+                    e.buf = nullptr;
+                    return *this;
+                }
+            }
+
+            jmp_buf& operator*() { return *buf; }
+
+        private:
+            jmp_buf* buf;
+    };
+
     struct BtBreakpoint;
 
     void execBreakpoint(vector<MatchResult>& results,
             CircuitGroup* fullNeedle,
             map<CircuitTree*, set<CircuitTree*> >& singleMatches,
-            vector<BtBreakpoint*>& breakpoints);
+            list<JmpBuf>& backtrackPoints,
+            const BtBreakpoint& breakpt,
+            WireOutPermutation& wirePerm,
+            vector<CircuitTree*>& missing,
+            map<CircuitTree*, int>& occurId);
 
     bool walkMatchesNode(
             vector<MatchResult>& results,
@@ -56,7 +93,7 @@ namespace {
             map<CircuitTree*, set<CircuitTree*> >& singleMatches,
             map<CircuitTree*, CircuitTree*>& nodeMap,
             unordered_map<WireId*, WireId*>& edgeMap,
-            vector<BtBreakpoint*>& breakpoints);
+            list<JmpBuf>& backtrackPoints);
 
     // ========================================================================
 
@@ -127,23 +164,17 @@ namespace {
     class Backtrack : public std::exception {};
 
     struct BtBreakpoint {
-        BtBreakpoint(WireId* match, WireId* needleMatch,
+        BtBreakpoint(
                 const set<CircuitTree*>& alreadyImplied,
                 const map<CircuitTree*, CircuitTree*>& nodeMap,
                 const unordered_map<WireId*, WireId*>& edgeMap)
-            : match(match), needleMatch(needleMatch),
-            alreadyImplied(alreadyImplied),
-            nodeMap(nodeMap), edgeMap(edgeMap),
-            wirePerm(), missing(), occurId()
+            : alreadyImplied(alreadyImplied),
+            nodeMap(nodeMap), edgeMap(edgeMap)
         {}
 
-        WireId *match, *needleMatch;
         set<CircuitTree*> alreadyImplied;
         map<CircuitTree*, CircuitTree*> nodeMap;
         unordered_map<WireId*, WireId*> edgeMap;
-        WireOutPermutation wirePerm;
-        vector<CircuitTree*> missing;
-        map<CircuitTree*, int> occurId;
     };
 
     bool isMatchFit(CircuitTree* match, CircuitTree* needleMatch,
@@ -345,18 +376,17 @@ namespace {
             map<CircuitTree*, set<CircuitTree*> >& singleMatches,
             map<CircuitTree*, CircuitTree*>& nodeMap,
             unordered_map<WireId*, WireId*>& edgeMap,
-            vector<BtBreakpoint*>& breakpoints)
+            list<JmpBuf>& backtrackPoints)
     {
         // We do not have to check `edgeMap` here, it was taken care of in
         // `walkMatchesNode`.
 
         // Create a breakpoint
-        BtBreakpoint* breakpt = new BtBreakpoint(
-                match, needleMatch, alreadyImplied, nodeMap, edgeMap);
+        BtBreakpoint breakpt(alreadyImplied, nodeMap, edgeMap);
 
         // Collect the `CircuitTree`s that are not connected yet in the match
-        vector<CircuitTree*>& missing = breakpt->missing;
-        map<CircuitTree*, int>& occurId = breakpt->occurId;
+        vector<CircuitTree*> missing;
+        map<CircuitTree*, int> occurId;
         unordered_map<sign_t, int> occursOfSig;
         for(auto needleCirc = needleMatch->adjacent_begin();
                 needleCirc != needleMatch->adjacent_end();
@@ -370,7 +400,6 @@ namespace {
             }
         }
         if(missing.empty()) { // Nothing more to do here, recurse on.
-            delete breakpt;
             return;
         }
 
@@ -386,36 +415,45 @@ namespace {
         }
 
         // Set the break point permutation
-        breakpt->wirePerm = WireOutPermutation(sigMatches, occursOfSig);
-        breakpoints.push_back(breakpt);
-        execBreakpoint(results, fullNeedle, singleMatches, breakpoints);
+        WireOutPermutation perm(sigMatches, occursOfSig);
+        execBreakpoint(results, fullNeedle, singleMatches,
+                backtrackPoints, breakpt,
+                perm, missing, occurId);
     }
 
     void execBreakpoint(vector<MatchResult>& results,
             CircuitGroup* fullNeedle,
             map<CircuitTree*, set<CircuitTree*> >& singleMatches,
-            vector<BtBreakpoint*>& breakpoints)
+            list<JmpBuf>& backtrackPoints,
+            const BtBreakpoint& breakpt,
+            WireOutPermutation& wirePerm,
+            vector<CircuitTree*>& missing,
+            map<CircuitTree*, int>& occurId)
     {
         FIND_DEBUG("   > Backtracking\n");
-        // Copy, keep the breakpoint clean
-        BtBreakpoint breakpt = *(breakpoints.back());
-
-        // Update breakpoints' list
-        {
-            BtBreakpoint* origBp = breakpoints.back();
-                if(!origBp->wirePerm.next()) {
-                    delete origBp;
-                    breakpoints.pop_back();
-                    FIND_DEBUG("    > [backtrack point removed, rem. %lu]\n",
-                            breakpoints.size());
-                }
+        backtrackPoints.emplace_back();
+        if(setjmp(*backtrackPoints.back()) != 0) {
+            /* We backtracked here: restore everything in the state it should
+             * be, increment the permutation, ... */
+            if(!wirePerm.next()) {
+                // We already backtracked as much as we could here
+                backtrackPoints.pop_back();
+                longjmp(*backtrackPoints.back(), 1);
+            }
         }
 
+        set<CircuitTree*> alreadyImplied = breakpt.alreadyImplied;
+        map<CircuitTree*, CircuitTree*> nodeMap = breakpt.nodeMap;
+        unordered_map<WireId*, WireId*> edgeMap = breakpt.edgeMap;
+        alreadyImplied = breakpt.alreadyImplied;
+        nodeMap = breakpt.nodeMap;
+        edgeMap = breakpt.edgeMap;
+
         bool suitable = true;
-        for(const auto& circ: breakpt.missing) {
+        for(const auto& circ: missing) {
             if(singleMatches[circ].find(
-                        breakpt.wirePerm.get(localSign(circ),
-                            breakpt.occurId[circ]))
+                        wirePerm.get(localSign(circ),
+                            occurId[circ]))
                     == singleMatches[circ].end())
             {
                 // Not suitable, let's not waste time
@@ -426,18 +464,17 @@ namespace {
         if(!suitable)
             throw Backtrack();
 
-        for(const auto& circ: breakpt.missing)
-            breakpt.nodeMap[circ] =
-                breakpt.wirePerm.get(localSign(circ), breakpt.occurId[circ]);
+        for(const auto& circ: missing)
+            nodeMap[circ] = wirePerm.get(localSign(circ), occurId[circ]);
 
-        for(const auto& circ: breakpt.missing) {
-            CircuitTree* matched = breakpt.nodeMap[circ];
-            breakpt.nodeMap.erase(circ); // It will be put back again
+        for(const auto& circ: missing) {
+            CircuitTree* matched = nodeMap[circ];
+            nodeMap.erase(circ); // It will be put back again
             if(!walkMatchesNode(results, fullNeedle,
                         matched, circ,
-                        breakpt.alreadyImplied, singleMatches,
-                        breakpt.nodeMap, breakpt.edgeMap,
-                        breakpoints))
+                        alreadyImplied, singleMatches,
+                        nodeMap, edgeMap,
+                        backtrackPoints))
             {
                 throw Backtrack();
             }
@@ -454,7 +491,7 @@ namespace {
             map<CircuitTree*, set<CircuitTree*> >& singleMatches,
             map<CircuitTree*, CircuitTree*>& nodeMap,
             unordered_map<WireId*, WireId*>& edgeMap,
-            vector<BtBreakpoint*>& breakpoints)
+            list<JmpBuf>& backtrackPoints)
     {
         FIND_DEBUG("  > So far, %lu (%s: %s ; %s: %s)\n", nodeMap.size()+1,
                 (*needleMatch->inp_begin())->name().c_str(),
@@ -524,7 +561,7 @@ namespace {
             {
                 walkMatchesEdge(results, fullNeedle, *pin, *needlePin,
                         alreadyImplied, singleMatches, nodeMap, edgeMap,
-                        breakpoints);
+                        backtrackPoints);
             }
         }
 
@@ -627,17 +664,21 @@ namespace {
         for(auto& match: singleMatches[fewestMatchesNeedle]) {
             map<CircuitTree*, CircuitTree*> nodeMap;
             unordered_map<WireId*, WireId*> edgeMap;
-            vector<BtBreakpoint*> breakpoints;
+            list<JmpBuf> backtrackPoints;
+            backtrackPoints.emplace_back();
 
-            try {
-                walkMatchesNode(results, needle, match, fewestMatchesNeedle,
-                        alreadyImplied, singleMatches, nodeMap, edgeMap,
-                        breakpoints);
-            } catch(const FoundResult&) {
-            } catch(const Backtrack&) {
-                if(!breakpoints.empty())
-                    execBreakpoint(results, needle,
-                            singleMatches, breakpoints);
+            if(setjmp(*backtrackPoints.back()) == 0) { // Initial set
+                try {
+                    walkMatchesNode(results, needle, match,
+                            fewestMatchesNeedle, alreadyImplied, singleMatches,
+                            nodeMap, edgeMap,
+                            backtrackPoints);
+                } catch(const FoundResult&) {}
+            }
+            else {
+                /* If we `long_jmp` here, we backtracked until we returned to
+                 * the original caller, meaning there was no result at all.
+                 * Thus, we don't have anything to do in particular. */
             }
         }
     }
