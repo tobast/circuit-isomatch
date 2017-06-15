@@ -20,6 +20,7 @@ OBJS = \
 	   circuitDelay.o \
 	   circuitAssert.o \
 	   circuitComb.o \
+	   dyn_bitset.o \
 	   groupEquality.o \
 	   subcircMatch.o \
 	   signatureConstants.o \
