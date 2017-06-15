@@ -19,6 +19,15 @@ int main(int argc, char** argv) {
 
     cout << matches.size() << " matches" << endl;
 
+    for(const auto& match: matches) {
+        static const int SHIFT_LEN = 30;
+        const string& ancestor = match.parts[0]->ancestor()->name();
+        cout << ancestor
+             << string(SHIFT_LEN - ancestor.size(), ' ')
+             << match.outputs[0]->name()
+             << endl;
+    }
+
     delete haystack;
     delete needle;
     return 0;
