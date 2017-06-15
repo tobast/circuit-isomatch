@@ -108,6 +108,11 @@ class DynBitset {
         /// Checks if any bit is true
         bool any() const;
 
+        /// Checks if a single bit is set
+        /** Checks whether a single bit is set. If so, returns this bit's
+         * position; if no or multiple bits are set, returns -1. */
+        int singleBit() const;
+
     private:
         inline void checkSize(const DynBitset& oth) const {
             if(size_ != oth.size_)
@@ -117,6 +122,10 @@ class DynBitset {
         inline size_t nbWords() const {
             return (size_ + word_size - 1) / word_size;
         }
+
+        /** Aux function for `singleBit`, does the same on a single word.
+         * Assumes every bit past `upTo` is false. */
+        int whichBit(Word word, size_t upTo) const;
 
         const size_t size_;
         Word* data;

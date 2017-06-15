@@ -13,7 +13,37 @@
 
 using namespace std;
 
+#ifdef DEBUG_FIND
+class ImplementationBug: public std::runtime_error {
+    public:
+        ImplementationBug(const char* what) : runtime_error(what) {};
+};
+#endif
+
 namespace {
+
+typedef std::vector<DynBitset> PermMatrix;
+
+struct Vertice {
+    enum Type {
+        VertWire, VertCirc
+    } type;
+
+    union {
+        WireId* wire;
+        CircuitTree* circ;
+    };
+};
+
+struct VerticeMapping {
+    unordered_map<WireId*, size_t> wireId;
+    map<CircuitTree*, size_t> circId;
+    vector<Vertice> vertices;
+};
+
+struct FullMapping {
+    VerticeMapping haystack, needle;
+};
 
 /// Recursively finds `needle` in `haystack` filling `results`
 void findIn(vector<MatchResult>& results,
@@ -112,91 +142,60 @@ bool isMatchFit(CircuitTree* match, CircuitTree* needleMatch,
  * This actually also updates `singleMatches` whenever an exact match
  * proves a `singleMatch` wrong. */
 bool isActualMatch(
-        map<CircuitTree*, CircuitTree*>& nodeMap,
-        unordered_map<WireId*, WireId*>& edgeMap,
+        const PermMatrix& perm,
+        const FullMapping& mapping,
         map<CircuitTree*, set<CircuitTree*> > singleMatches)
 {
-    /* We have a few things to check here.
-       (1) The nodes must be formally equal
-       (2) The structure must be identical, that is, when iterating over
-           the IOs of each pair of mapped nodes, the IOs must be the same
-           wrt. the edge mapping
-       (3) The nodes' and edges' map must be a bijective mapping, that is,
-           we must ensure that not two keys map to the same value
-    */
+    /* Here, we must check that the nodes are actually equal to each other.
+     * This only applies for circuits; Ullmann's algorithm ensures that wires
+     * are correctly mapped when we reach this point.
+     */
 
     FIND_DEBUG(" > Checking a potential solution…\n");
 
-    // (1)
-    for(const auto& nodeMatch: nodeMap) {
-        if(!nodeMatch.first->equals(nodeMatch.second)) {
+    for(size_t haystackPos = 0;
+            haystackPos < mapping.haystack.vertices.size();
+            ++haystackPos)
+    {
+        if(mapping.haystack.vertices[haystackPos].type != Vertice::VertCirc)
+            continue; // We don't have to check that one
+
+        if(!perm[haystackPos].any())
+            continue; // not mapped
+
+        int mappedId = perm[haystackPos].singleBit();
+        if(mappedId < 0) {
+#ifdef DEBUG_FIND
+            throw ImplementationBug("Non-bijective mapping `isActualMatch`");
+#else
+            return false; // Bad mapping
+#endif
+        }
+
+        if(mapping.needle.vertices[mappedId].type != Vertice::VertCirc) {
+#ifdef DEBUG_FIND
+            throw ImplementationBug("Mapping vertice to wire `isActualMatch`");
+#else
+            return false;
+#endif
+        }
+
+        CircuitTree* needlePart = mapping.needle.vertices[mappedId].circ;
+        CircuitTree* haystackPart = mapping.haystack.vertices[mappedId].circ;
+
+        if(!needlePart->equals(haystackPart)) {
+            set<CircuitTree*> singleMatchesOf = singleMatches[needlePart];
             // Remember that this was not a match, after all.
-            singleMatches[nodeMatch.first].erase(
-                    singleMatches[nodeMatch.first].find(nodeMatch.second));
+            auto singleIter = singleMatchesOf.find(haystackPart);
+            if(singleIter != singleMatchesOf.end())
+                singleMatchesOf.erase(singleIter);
             FIND_DEBUG("  > Not sub-equal\n");
             return false;
         }
     }
 
-    // (2)
-    for(const auto& nodeMatch: nodeMap) {
-        try{
-            auto needlePin = nodeMatch.first->io_begin(),
-                 haystackPin = nodeMatch.second->io_begin();
-            for(; needlePin != nodeMatch.first->io_end()
-                    && haystackPin != nodeMatch.second->io_end() ;
-                    ++needlePin, ++haystackPin)
-            {
-                if(*(edgeMap.at(*needlePin)) != **haystackPin) {
-                    FIND_DEBUG("%s ---> %s <> %s\n",
-                            (*needlePin)->name().c_str(),
-                            edgeMap.at(*needlePin)->name().c_str(),
-                            (*haystackPin)->name().c_str());
-                    FIND_DEBUG("  > Wires inconsistency\n");
-                    return false;
-                }
-
-            }
-
-            if(needlePin != nodeMatch.first->io_end()
-                    || haystackPin != nodeMatch.second->io_end())
-            {
-                FIND_DEBUG("  > Mismatched number of pins\n");
-                return false; // mismatched pin number?!
-            }
-        } catch(const std::out_of_range&) {
-            FIND_DEBUG("  > Unmapped pin\n");
-            return false; // One of the edgeMap lookups failed
-        }
-    }
-
-    // (3)
-    // (3.1) -- nodes
-    {
-        set<CircuitTree*> seen;
-        for(const auto& match: nodeMap) {
-            if(seen.find(match.second) != seen.end()) {
-                FIND_DEBUG("  > Nodes non-injective\n");
-                return false;
-            }
-            seen.insert(match.second);
-        }
-    }
-    // (3.2) -- edges
-    {
-        unordered_set<WireId*> seen;
-        for(const auto& match: edgeMap) {
-            if(seen.find(match.second) != seen.end()) {
-                FIND_DEBUG("  > Wires non-injective\n");
-                return false;
-            }
-            seen.insert(match.second);
-        }
-    }
-
-    FIND_DEBUG("  > Found a match\n");
-
     // Everything is fine now!
+    FIND_DEBUG("  > Found a match\n");
     return true;
 }
 
