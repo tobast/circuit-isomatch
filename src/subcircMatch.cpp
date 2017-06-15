@@ -25,6 +25,7 @@ namespace {
             typedef CircuitTree Val;
 #ifdef DEBUG_FIND
             WireOutPermutation() : unconstructed(true) {}
+            int nexted;
 #else
             WireOutPermutation() {}
 #endif
@@ -79,8 +80,10 @@ namespace {
             CircuitGroup* fullNeedle,
             map<CircuitTree*, set<CircuitTree*> >& singleMatches,
             list<JmpBuf>& backtrackPoints,
-            const BtBreakpoint& breakpt,
-            WireOutPermutation& wirePerm,
+            set<CircuitTree*>& alreadyImplied,
+            map<CircuitTree*, CircuitTree*>& nodeMap,
+            unordered_map<WireId*, WireId*>& edgeMap,
+            WireOutPermutation* wirePerm,
             vector<CircuitTree*>& missing,
             map<CircuitTree*, int>& occurId);
 
@@ -160,8 +163,6 @@ namespace {
     };
 
     class FoundResult : public std::exception {};
-
-    class Backtrack : public std::exception {};
 
     struct BtBreakpoint {
         BtBreakpoint(
@@ -313,6 +314,9 @@ namespace {
     WireOutPermutation::WireOutPermutation(
             const unordered_map<sign_t, vector<Val*> >& sigMatches,
             const unordered_map<sign_t, int>& occursOfSig) :
+#ifdef DEBUG_FIND
+        nexted(0),
+#endif
         sigMatches(sigMatches), occursOfSig(occursOfSig)
 #ifdef DEBUG_FIND
         , unconstructed(false)
@@ -335,8 +339,10 @@ namespace {
 #ifdef DEBUG_FIND
         if(unconstructed)
             throw std::runtime_error("WireOutPermutation not initialized");
+        nexted++;
 #endif
         for(auto& perm: perms) {
+            FIND_DEBUG("Blah\n");
             if(next_permutation(perm.second.begin(), perm.second.end()))
                 return true;
         }
@@ -380,9 +386,10 @@ namespace {
     {
         // We do not have to check `edgeMap` here, it was taken care of in
         // `walkMatchesNode`.
-
-        // Create a breakpoint
-        BtBreakpoint breakpt(alreadyImplied, nodeMap, edgeMap);
+        FIND_DEBUG("  > In `%s` <--> `%s`\n",
+                match->name().c_str(), needleMatch->name().c_str());
+        if(match->name() == " _wire_1085")
+            FIND_DEBUG("oo In _wire_1085\n");
 
         // Collect the `CircuitTree`s that are not connected yet in the match
         vector<CircuitTree*> missing;
@@ -414,10 +421,16 @@ namespace {
                 sigMatches[signature].push_back(*circ);
         }
 
+        FIND_DEBUG("|| From %s: ", match->name().c_str());
+        for(const auto& occur: sigMatches)
+            FIND_DEBUG("%lu ", occur.second.size());
+        FIND_DEBUG("\n");
+
         // Set the break point permutation
-        WireOutPermutation perm(sigMatches, occursOfSig);
+        WireOutPermutation* perm =
+            new WireOutPermutation(sigMatches, occursOfSig);
         execBreakpoint(results, fullNeedle, singleMatches,
-                backtrackPoints, breakpt,
+                backtrackPoints, alreadyImplied, nodeMap, edgeMap,
                 perm, missing, occurId);
     }
 
@@ -425,34 +438,35 @@ namespace {
             CircuitGroup* fullNeedle,
             map<CircuitTree*, set<CircuitTree*> >& singleMatches,
             list<JmpBuf>& backtrackPoints,
-            const BtBreakpoint& breakpt,
-            WireOutPermutation& wirePerm,
+            set<CircuitTree*>& alreadyImplied,
+            map<CircuitTree*, CircuitTree*>& nodeMap,
+            unordered_map<WireId*, WireId*>& edgeMap,
+            WireOutPermutation* wirePerm,
             vector<CircuitTree*>& missing,
             map<CircuitTree*, int>& occurId)
     {
-        FIND_DEBUG("   > Backtracking\n");
         backtrackPoints.emplace_back();
         if(setjmp(*backtrackPoints.back()) != 0) {
             /* We backtracked here: restore everything in the state it should
              * be, increment the permutation, ... */
-            if(!wirePerm.next()) {
+            FIND_DEBUG("   > Backtracking [%d]", wirePerm->nexted);
+            if(!wirePerm->next()) {
                 // We already backtracked as much as we could here
                 backtrackPoints.pop_back();
+                delete wirePerm;
+                FIND_DEBUG(" [end, backtrack further]\n");
                 longjmp(*backtrackPoints.back(), 1);
             }
+            FIND_DEBUG("\n");
         }
-
-        set<CircuitTree*> alreadyImplied = breakpt.alreadyImplied;
-        map<CircuitTree*, CircuitTree*> nodeMap = breakpt.nodeMap;
-        unordered_map<WireId*, WireId*> edgeMap = breakpt.edgeMap;
-        alreadyImplied = breakpt.alreadyImplied;
-        nodeMap = breakpt.nodeMap;
-        edgeMap = breakpt.edgeMap;
+        else {
+            FIND_DEBUG("   > Backtracking begins [%d]\n", wirePerm->nexted);
+        }
 
         bool suitable = true;
         for(const auto& circ: missing) {
             if(singleMatches[circ].find(
-                        wirePerm.get(localSign(circ),
+                        wirePerm->get(localSign(circ),
                             occurId[circ]))
                     == singleMatches[circ].end())
             {
@@ -462,10 +476,10 @@ namespace {
             }
         }
         if(!suitable)
-            throw Backtrack();
+            longjmp(*backtrackPoints.back(), 1);
 
         for(const auto& circ: missing)
-            nodeMap[circ] = wirePerm.get(localSign(circ), occurId[circ]);
+            nodeMap[circ] = wirePerm->get(localSign(circ), occurId[circ]);
 
         for(const auto& circ: missing) {
             CircuitTree* matched = nodeMap[circ];
@@ -476,7 +490,7 @@ namespace {
                         nodeMap, edgeMap,
                         backtrackPoints))
             {
-                throw Backtrack();
+                longjmp(*backtrackPoints.back(), 1);
             }
         }
     }
@@ -531,15 +545,12 @@ namespace {
         }
 
         nodeMap[needleMatch] = match;
-        vector<WireId*> toUnassign;
         for(auto pin = match->io_begin(), needlePin = needleMatch->io_begin();
                 pin != match->io_end() && needlePin != needleMatch->io_end();
                 ++pin, ++needlePin)
         {
-            if(edgeMap.find(*needlePin) == edgeMap.end()) {
-                toUnassign.push_back(*needlePin);
+            if(edgeMap.find(*needlePin) == edgeMap.end())
                 edgeMap[*needlePin] = *pin;
-            }
         }
 
         if(nodeMap.size() == fullNeedle->getChildrenCst().size()) {
@@ -565,9 +576,6 @@ namespace {
             }
         }
 
-        for(const auto& unassign: toUnassign)
-            edgeMap.erase(unassign);
-        nodeMap.erase(needleMatch);
         return true;
     }
 
