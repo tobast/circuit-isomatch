@@ -59,7 +59,11 @@ class WireManager {
          */
         bool hasWire(size_t id);
 
-        const std::vector<WireId*>& wires() const { return wireById; }
+        /// Returns *all* wires, including the merged ones
+        const std::vector<WireId*>& allWires() const { return wireById; }
+
+        /// Returns a vector of unique wires
+        std::vector<WireId*> wires() const;
 
         /**
          * Retrieves an existing wire, or creates it as a fresh one if it does

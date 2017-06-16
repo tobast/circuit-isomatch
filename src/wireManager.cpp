@@ -27,6 +27,15 @@ bool WireManager::hasWire(size_t id) {
     return wireById.size() > id; // `id` is unsigned
 }
 
+std::vector<WireId*> WireManager::wires() const {
+    vector<WireId*> out;
+    for(const auto& wire: allWires()) {
+        if(wire->isEndpoint)
+            out.push_back(wire);
+    }
+    return out;
+}
+
 WireId* WireManager::wire(const std::string& name, bool dontCreate) {
     if(!hasWire(name)) {
         if(dontCreate)
