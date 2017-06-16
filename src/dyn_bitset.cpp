@@ -2,10 +2,29 @@
 
 #include <cstring>
 
+DynBitset::Reference& DynBitset::Reference::operator=(bool e) {
+    if(e)
+        set();
+    else
+        reset();
+    return *this;
+}
+
+DynBitset::Reference& DynBitset::Reference::operator=(
+        const DynBitset::Reference& e)
+{
+    if(e)
+        set();
+    else
+        reset();
+    return *this;
+}
+
 DynBitset::DynBitset(size_t size)
     : size_(size)
 {
     data = new Word[nbWords()];
+    reset();
 }
 
 DynBitset::DynBitset(const DynBitset& oth)
@@ -13,6 +32,7 @@ DynBitset::DynBitset(const DynBitset& oth)
 {
     data = new Word[nbWords()];
     memcpy(data, oth.data, nbWords());
+    // We assume `oth`'s last bits are 0s, as it should be
 }
 
 DynBitset::DynBitset(size_t size, Word* words)
@@ -22,6 +42,7 @@ DynBitset::DynBitset(size_t size, Word* words)
 DynBitset::DynBitset(DynBitset&& oth)
     : size_(oth.size_), data(oth.data)
 {
+    // This could seriously mess things up if called improperly
     oth.data = nullptr;
 }
 
@@ -62,6 +83,15 @@ DynBitset& DynBitset::operator^=(const DynBitset& oth) {
 DynBitset& DynBitset::flip() {
     for(size_t word = 0; word < nbWords(); ++word)
         data[word] = ~data[word];
+
+    // Keep 0s at the end
+    Word lastMask = 0;
+    lastMask = ~lastMask;
+    size_t lastWordBits = size_ % word_size;
+    if(lastWordBits > 0)
+        lastMask >>= word_size - lastWordBits;
+    data[nbWords() - 1] &= lastMask;
+
     return *this;
 }
 
@@ -92,19 +122,35 @@ DynBitset DynBitset::operator~() const {
     return out;
 }
 
-bool DynBitset::any() const {
-    for(size_t word = 0; word < nbWords() - 1; ++word)
-        if(data[word] != 0)
-            return true;
-
-    Word lastmask = ~0;
-    size_t lastWordBits = size_ % word_size;
-    if(lastWordBits > 0)
-        lastmask >>= word_size - lastWordBits;
-    return (data[nbWords() - 1] & lastmask) != 0;
+void DynBitset::reset() {
+    for(size_t word = 0; word < nbWords(); ++word)
+        data[word] = 0;
 }
 
-int DynBitset::whichBit(DynBitset::Word word, size_t upTo) const {
+bool DynBitset::any() const {
+    for(size_t word = 0; word < nbWords(); ++word)
+        if(data[word] != 0)
+            return true;
+    return false;
+}
+
+bool DynBitset::anyOver(size_t pos) const {
+    size_t firstWord = pos / word_size;
+
+    Word firstMask = 0;
+    firstMask = ~firstMask;
+    firstMask <<= (pos % word_size);
+    if(data[firstWord] & firstMask)
+        return true;
+
+    for(size_t word = firstWord + 1; word < nbWords(); ++word)
+        if(data[word] != 0)
+            return true;
+    return false;
+}
+
+int DynBitset::whichBit(DynBitset::Word word, size_t /*upTo*/) const {
+    /*
     if(upTo == 1)
         return (word & 0x1);
     else if(word == 0)
@@ -123,6 +169,16 @@ int DynBitset::whichBit(DynBitset::Word word, size_t upTo) const {
     else if(bottomResult >= 0)
         return -1;
     return topResult + nextSliceSize;
+    */
+    for(int bit = 0; word != 0; ++bit) {
+        if(word & 0x1) {
+            if(word != 1)
+                return -1;
+            return bit;
+        }
+        word >>= 1;
+    }
+    return -1;
 }
 
 int DynBitset::singleBit() const {
@@ -135,4 +191,17 @@ int DynBitset::singleBit() const {
         }
     }
     return singlePos;
+}
+
+std::string DynBitset::dump() const {
+    std::string out;
+    for(size_t word = 0; word < nbWords(); ++word) {
+        Word cWord = data[word];
+        for(size_t hexDigit = 0 ; hexDigit < word_size / 4; ++hexDigit) {
+            char c = cWord % 16;
+            out += (c >= 10) ? ('A' + c) : ('0' + c);
+            cWord >>= 4;
+        }
+    }
+    return out;
 }

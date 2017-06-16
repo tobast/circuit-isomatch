@@ -117,6 +117,11 @@ class WireId {
         /** Get the list of wires connected to that wire. Fast. */
         const std::vector<PinConnection>& connectedPins();
 
+        /** Get the number of direct connections to this wire. */
+        size_t connectedCount() {
+            return connectedCirc().size() + connectedPins().size();
+        }
+
         /** Get an iterator to the first adjacent circuit. Adjacent circuits
          * are the circuits directly connected to this wire. Groups connected
          * to this wire are considered (instead of considering the actual leaf

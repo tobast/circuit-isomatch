@@ -2,6 +2,7 @@
 
 #include <cstdlib>
 #include <exception>
+#include <string>
 
 /** Dynamically sized bitset
  *
@@ -42,10 +43,24 @@ class DynBitset {
                 }
 
                 /// In-place flips the bit
-                Reference& flip();
+                Reference& flip() {
+                    (*word) ^= (1 << pos);
+                    return *this;
+                }
+
+                /// Sets the bit (slightly faster than ` = true`)
+                inline void set() {
+                    (*word) |= (1 << pos);
+                }
+
+                /// Resets the bit (slightly faster than ` = false`)
+                void reset() {
+                    (*word) &= ~(1 << pos);
+                }
 
             private:
-                Reference(DynBitset::Word* word, size_t pos);
+                Reference(DynBitset::Word* word, size_t pos)
+                    : word(word), pos(pos) {}
 
                 DynBitset::Word* word;
                 size_t pos;
@@ -108,10 +123,16 @@ class DynBitset {
         /// Checks if any bit is true
         bool any() const;
 
+        /// Checks if any bit above the `pos`th (incl.) is true
+        bool anyOver(size_t pos) const;
+
         /// Checks if a single bit is set
         /** Checks whether a single bit is set. If so, returns this bit's
          * position; if no or multiple bits are set, returns -1. */
         int singleBit() const;
+
+        /// Dumps the DynBitset to an hex representation
+        std::string dump() const;
 
     private:
         inline void checkSize(const DynBitset& oth) const {

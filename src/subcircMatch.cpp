@@ -23,8 +23,11 @@ class ImplementationBug: public std::runtime_error {
 namespace {
 
 typedef std::vector<DynBitset> PermMatrix;
+typedef std::vector<DynBitset> AdjacencyMatr;
 
 struct Vertice {
+    Vertice(WireId* w) : type(VertWire), wire(w) {}
+    Vertice(CircuitTree* c) : type(VertCirc), circ(c) {}
     enum Type {
         VertWire, VertCirc
     } type;
@@ -138,13 +141,8 @@ bool isMatchFit(CircuitTree* match, CircuitTree* needleMatch,
     return true;
 }
 
-/** Check whether a supposed match is actually a match or not.
- * This actually also updates `singleMatches` whenever an exact match
- * proves a `singleMatch` wrong. */
-bool isActualMatch(
-        const PermMatrix& perm,
-        const FullMapping& mapping,
-        map<CircuitTree*, set<CircuitTree*> > singleMatches)
+/// Check whether a supposed match is actually a match or not.
+bool isActualMatch(const PermMatrix& perm, const FullMapping& mapping)
 {
     /* Here, we must check that the nodes are actually equal to each other.
      * This only applies for circuits; Ullmann's algorithm ensures that wires
@@ -153,26 +151,25 @@ bool isActualMatch(
 
     FIND_DEBUG(" > Checking a potential solution…\n");
 
-    for(size_t haystackPos = 0;
-            haystackPos < mapping.haystack.vertices.size();
-            ++haystackPos)
+    for(size_t needlePos = 0;
+            needlePos < mapping.needle.vertices.size();
+            ++needlePos)
     {
-        if(mapping.haystack.vertices[haystackPos].type != Vertice::VertCirc)
+        if(mapping.needle.vertices[needlePos].type != Vertice::VertCirc)
             continue; // We don't have to check that one
 
-        if(!perm[haystackPos].any())
-            continue; // not mapped
-
-        int mappedId = perm[haystackPos].singleBit();
+        int mappedId = perm[needlePos].singleBit();
         if(mappedId < 0) {
 #ifdef DEBUG_FIND
+            FIND_DEBUG("ID = %d; row: %s\n",
+                    mappedId, perm[needlePos].dump().c_str());
             throw ImplementationBug("Non-bijective mapping `isActualMatch`");
 #else
             return false; // Bad mapping
 #endif
         }
 
-        if(mapping.needle.vertices[mappedId].type != Vertice::VertCirc) {
+        if(mapping.haystack.vertices[mappedId].type != Vertice::VertCirc) {
 #ifdef DEBUG_FIND
             throw ImplementationBug("Mapping vertice to wire `isActualMatch`");
 #else
@@ -180,15 +177,11 @@ bool isActualMatch(
 #endif
         }
 
-        CircuitTree* needlePart = mapping.needle.vertices[mappedId].circ;
+        CircuitTree* needlePart = mapping.needle.vertices[needlePos].circ;
         CircuitTree* haystackPart = mapping.haystack.vertices[mappedId].circ;
 
         if(!needlePart->equals(haystackPart)) {
-            set<CircuitTree*> singleMatchesOf = singleMatches[needlePart];
-            // Remember that this was not a match, after all.
-            auto singleIter = singleMatchesOf.find(haystackPart);
-            if(singleIter != singleMatchesOf.end())
-                singleMatchesOf.erase(singleIter);
+            // MAYBE TODO: propagate down that it is not a match?
             FIND_DEBUG("  > Not sub-equal\n");
             return false;
         }
@@ -199,20 +192,193 @@ bool isActualMatch(
     return true;
 }
 
+void mapVertices(CircuitGroup* group, VerticeMapping& mapping) {
+    // MAYBE TODO: So far, a bit dumb. Surely we can do better?
+    vector<WireId*> wires = group->wireManager()->wires();
+    sort(wires.begin(), wires.end(),
+            [](WireId*& e1, WireId*& e2) {
+                return e1->connectedCount() > e2->connectedCount();
+            });
+
+    for(const auto& wire: wires) {
+        mapping.wireId[wire] = mapping.vertices.size();
+        mapping.vertices.push_back(Vertice(wire));
+    }
+
+    for(const auto& child: group->getChildrenCst()) {
+        mapping.circId[child] = mapping.vertices.size();
+        mapping.vertices.push_back(Vertice(child));
+    }
+}
+
+/// Sets bits in the adjacency matrix when circuits are adjacent
+void buildAdjacency(CircuitGroup* group,
+        const VerticeMapping& mapping,
+        AdjacencyMatr& adjacency)
+{
+    for(const auto& wire: group->wireManager()->wires()) {
+        size_t wireId = mapping.wireId.at(wire);
+        for(auto circ = wire->adjacent_begin();
+                circ != wire->adjacent_end();
+                ++circ)
+        {
+            size_t circId = mapping.circId.at(*circ);
+            adjacency[circId][wireId].set();
+            adjacency[wireId][circId].set();
+        }
+    }
+}
+
+WireId* mappedWire(WireId* of,
+        const FullMapping& mapping,
+        const PermMatrix& perm)
+{
+    size_t needleId = mapping.needle.wireId.at(of);
+    int matchId = perm[needleId].singleBit();
+#ifdef DEBUG_FIND
+    if(matchId < 0)
+        throw ImplementationBug("No single corresp `mappedWire`");
+    if(mapping.haystack.vertices[matchId].type != Vertice::VertWire)
+        throw ImplementationBug("Bad corresp type `mappedWire`");
+#endif
+    const Vertice& mapped = mapping.haystack.vertices.at(matchId);
+    return mapped.wire;
+}
+
 /// Create a `MatchResult` based on match maps
 MatchResult buildMatchResult(
         const CircuitGroup* fullNeedle,
-         map<CircuitTree*, CircuitTree*>& nodeMap,
-         unordered_map<WireId*, WireId*>& edgeMap)
+        const FullMapping& mapping,
+        const PermMatrix& perm)
 {
     MatchResult res;
-    for(const auto& needlePart: fullNeedle->getChildrenCst())
-        res.parts.push_back(nodeMap[needlePart]);
+    for(const auto& needlePart: fullNeedle->getChildrenCst()) {
+        size_t needleId = mapping.needle.circId.at(needlePart);
+        int matchId = perm[needleId].singleBit();
+#ifdef DEBUG_FIND
+        if(matchId < 0)
+            throw ImplementationBug("No single corresp `buildMatchResult`");
+        if(mapping.haystack.vertices[matchId].type != Vertice::VertCirc)
+            throw ImplementationBug("Bad corresp type `buildMatchResult`");
+#endif
+        const Vertice& mapped = mapping.haystack.vertices.at(matchId);
+        res.parts.push_back(mapped.circ);
+    }
     for(const auto& inp: fullNeedle->getInputs())
-        res.inputs.push_back(edgeMap.at(inp->actual()));
+        res.inputs.push_back(mappedWire(inp->actual(), mapping, perm));
     for(const auto& out: fullNeedle->getOutputs())
-        res.outputs.push_back(edgeMap.at(out->actual()));
+        res.inputs.push_back(mappedWire(out->actual(), mapping, perm));
     return res;
+}
+
+bool ullmannRefine(PermMatrix& matr,
+        const FullMapping& mapping,
+        const AdjacencyMatr& hayAdj)
+{
+    bool changed = true;
+    size_t nbNeedle = mapping.needle.vertices.size();
+    while(changed) {
+        changed = false;
+        for(size_t needleId = 0; needleId < nbNeedle; ++needleId) {
+            if(!matr[needleId].any())
+                return false;
+
+            const Vertice& needleVert = mapping.needle.vertices[needleId];
+            for(size_t hayId = 0; hayId < matr.size(); ++hayId) {
+                if(!matr[needleId][hayId])
+                    continue;
+
+                if(needleVert.type == Vertice::VertCirc) {
+                    const CircuitTree* needle = needleVert.circ;
+                    for(auto needleNeigh = needle->io_begin();
+                            needleNeigh != needle->io_end();
+                            ++needleNeigh)
+                    {
+                        size_t neighId =
+                            mapping.needle.wireId.at(*needleNeigh);
+                        if(!(matr[neighId] & hayAdj[hayId]).any()) {
+                            changed = true;
+                            matr[needleId][hayId].reset();
+                            break;
+                        }
+                    }
+                }
+                else /* if(needleVert.type == Vertice::VertWire) */ {
+                    WireId* needle = needleVert.wire;
+                    for(auto needleNeigh = needle->adjacent_begin();
+                            needleNeigh != needle->adjacent_end();
+                            ++needleNeigh)
+                    {
+                        size_t neighId =
+                            mapping.needle.circId.at(*needleNeigh);
+                        if(!(matr[neighId] & hayAdj[hayId]).any()) {
+                            changed = true;
+                            matr[needleId][hayId].reset();
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    return true;
+}
+
+void ullmannFindDepth(size_t depth,
+        DynBitset& freeHayVert,
+        vector<MatchResult>& results,
+        PermMatrix& matr,
+        const FullMapping& mapping,
+        const AdjacencyMatr& hayAdj,
+        const CircuitGroup* fullNeedle)
+{
+    FIND_DEBUG("> Ullmann: depth %lu/%lu\n", depth,
+            mapping.needle.vertices.size());
+    if(! (matr[depth] & freeHayVert).any())
+        return;
+
+    PermMatrix matrDump = matr; // Copies stuff
+
+    for(size_t hayId = 0; hayId < mapping.haystack.vertices.size(); ++hayId) {
+        if(!matr[depth][hayId] || !freeHayVert[hayId])
+            continue;
+
+        matr[depth].reset();
+        matr[depth][hayId].set();
+
+        if(ullmannRefine(matr, mapping, hayAdj)) {
+            if(depth == mapping.needle.vertices.size() - 1) {
+                if(isActualMatch(matr, mapping)) {
+                    results.push_back(buildMatchResult(
+                                fullNeedle, mapping, matr));
+                }
+            }
+            else {
+                freeHayVert[hayId].set();
+                ullmannFindDepth(depth + 1, freeHayVert, results, matr,
+                        mapping, hayAdj, fullNeedle);
+                freeHayVert[hayId].reset();
+            }
+        }
+
+        if(!matr[depth].anyOver(hayId+1))
+            break;
+
+        matr = matrDump;
+    }
+}
+
+void ullmannFind(vector<MatchResult>& results,
+        PermMatrix& matr,
+        const FullMapping& mapping,
+        const AdjacencyMatr& hayAdj,
+        const CircuitGroup* fullNeedle)
+{
+    DynBitset freeHayVert(mapping.haystack.vertices.size());
+    freeHayVert.flip(); // Everything's free to begin with
+    ullmannFindDepth(0, freeHayVert, results, matr, mapping, hayAdj,
+            fullNeedle);
 }
 
 void findIn(vector<MatchResult>& results,
@@ -292,8 +458,59 @@ void findIn(vector<MatchResult>& results,
         if(singleMatches[child].empty())
             return;
 
-    // Ullman algorithm
-    // TODO
+    // Map vertices (ie. wires and circuits) to IDs
+    FullMapping mapping;
+    mapVertices(needle, mapping.needle);
+    mapVertices(haystack, mapping.haystack);
+
+    // Determine haystack's adjacencies
+    AdjacencyMatr hayAdj(
+            mapping.haystack.vertices.size(),
+            DynBitset(mapping.haystack.vertices.size()));
+    buildAdjacency(haystack, mapping.haystack, hayAdj);
+
+    // == Ullman's algorithm ==
+    // Build the permutation matrix (initially not a permutation
+    // The matix is |needle| x |haystack|, and a 1 indicates that we think two
+    // vertices could be matches at a given point.
+    PermMatrix permMatrix(
+            mapping.needle.vertices.size(),
+            DynBitset(mapping.haystack.vertices.size()));
+    // Setting the possible adjacent circuits (singleMatches)
+    for(const auto& match: singleMatches) {
+        size_t needleId = mapping.needle.circId[match.first];
+        for(const auto& hayPart: match.second) {
+            size_t hayId = mapping.haystack.circId[hayPart];
+            permMatrix[needleId][hayId].set();
+        }
+    }
+    // Setting the possibly adjacent wires (wireFit + degrees)
+    // Let's not be clever for now, and (maybe) enhance this part later
+    for(const auto& hayWire: haystack->wireManager()->wires()) {
+        if(wireFit.find(hayWire) == wireFit.end()) // Not inserted, abort
+            continue;
+
+        size_t hayId = mapping.haystack.wireId[hayWire];
+
+        for(const auto& needleWire: needle->wireManager()->wires()) {
+            if((hayWire->connectedCirc().size()
+                        == needleWire->connectedCirc().size())
+                    && (hayWire->connectedPins().size()
+                        == needleWire->connectedPins().size())
+                    && wireFit[hayWire].fitFor(needleWire))
+            {
+                // Fit for this role
+                size_t needleId = mapping.needle.wireId[needleWire];
+                permMatrix[needleId][hayId].set();
+            }
+        }
+    }
+    // First refining
+    if(!ullmannRefine(permMatrix, mapping, hayAdj))
+        return;
+
+    // Ullmann's recursion
+    ullmannFind(results, permMatrix, mapping, hayAdj, needle);
 }
 
 }; // namespace
