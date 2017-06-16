@@ -161,8 +161,6 @@ bool isActualMatch(const PermMatrix& perm, const FullMapping& mapping)
         int mappedId = perm[needlePos].singleBit();
         if(mappedId < 0) {
 #ifdef DEBUG_FIND
-            FIND_DEBUG("ID = %d; row: %s\n",
-                    mappedId, perm[needlePos].dump().c_str());
             throw ImplementationBug("Non-bijective mapping `isActualMatch`");
 #else
             return false; // Bad mapping
@@ -171,6 +169,8 @@ bool isActualMatch(const PermMatrix& perm, const FullMapping& mapping)
 
         if(mapping.haystack.vertices[mappedId].type != Vertice::VertCirc) {
 #ifdef DEBUG_FIND
+            FIND_DEBUG("Pos: %d, vect: %s\n",
+                    mappedId, perm[needlePos].dump().c_str());
             throw ImplementationBug("Mapping vertice to wire `isActualMatch`");
 #else
             return false;
@@ -476,6 +476,7 @@ void findIn(vector<MatchResult>& results,
     PermMatrix permMatrix(
             mapping.needle.vertices.size(),
             DynBitset(mapping.haystack.vertices.size()));
+
     // Setting the possible adjacent circuits (singleMatches)
     for(const auto& match: singleMatches) {
         size_t needleId = mapping.needle.circId[match.first];
@@ -505,9 +506,46 @@ void findIn(vector<MatchResult>& results,
             }
         }
     }
+
+#ifdef DEBUG_FIND
+    FIND_DEBUG("  ");
+    for(const auto& vert: mapping.haystack.vertices)
+        FIND_DEBUG(vert.type == Vertice::VertWire ? "W" : "C");
+    FIND_DEBUG("\n");
+    for(size_t needleId = 0;
+            needleId < mapping.needle.vertices.size(); ++needleId)
+    {
+        FIND_DEBUG(
+                mapping.needle.vertices[needleId].type == Vertice::VertWire ?
+                    "W " : "C ");
+        for(size_t hayId = 0; hayId < mapping.haystack.vertices.size(); ++hayId)
+            FIND_DEBUG("%c", '0' + permMatrix[needleId][hayId]);
+        if(mapping.needle.vertices[needleId].type == Vertice::VertWire)
+            FIND_DEBUG("  %s", mapping.needle.vertices[needleId].wire->name().c_str());
+        FIND_DEBUG("\n");
+    }
+#endif
+
     // First refining
     if(!ullmannRefine(permMatrix, mapping, hayAdj))
         return;
+
+#ifdef DEBUG_FIND
+    FIND_DEBUG("  ");
+    for(const auto& vert: mapping.haystack.vertices)
+        FIND_DEBUG(vert.type == Vertice::VertWire ? "W" : "C");
+    FIND_DEBUG("\n");
+    for(size_t needleId = 0;
+            needleId < mapping.needle.vertices.size(); ++needleId)
+    {
+        FIND_DEBUG(
+                mapping.needle.vertices[needleId].type == Vertice::VertWire ?
+                    "W " : "C ");
+        for(size_t hayId = 0; hayId < mapping.haystack.vertices.size(); ++hayId)
+            FIND_DEBUG("%c", '0' + permMatrix[needleId][hayId]);
+        FIND_DEBUG("\n");
+    }
+#endif
 
     // Ullmann's recursion
     ullmannFind(results, permMatrix, mapping, hayAdj, needle);

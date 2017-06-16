@@ -31,7 +31,7 @@ DynBitset::DynBitset(const DynBitset& oth)
     : size_(oth.size_)
 {
     data = new Word[nbWords()];
-    memcpy(data, oth.data, nbWords());
+    memcpy(data, oth.data, nbWords() * sizeof(Word));
     // We assume `oth`'s last bits are 0s, as it should be
 }
 
@@ -52,7 +52,7 @@ DynBitset::~DynBitset() {
 
 void DynBitset::operator=(const DynBitset& oth) {
     checkSize(oth);
-    memcpy(data, oth.data, nbWords());
+    memcpy(data, oth.data, nbWords() * sizeof(Word));
 }
 
 DynBitset::Reference DynBitset::operator[](size_t pos) {
@@ -149,7 +149,7 @@ bool DynBitset::anyOver(size_t pos) const {
     return false;
 }
 
-int DynBitset::whichBit(DynBitset::Word word, size_t /*upTo*/) const {
+int DynBitset::whichBit(DynBitset::Word word, size_t, int offset) const {
     /*
     if(upTo == 1)
         return (word & 0x1);
@@ -171,10 +171,10 @@ int DynBitset::whichBit(DynBitset::Word word, size_t /*upTo*/) const {
     return topResult + nextSliceSize;
     */
     for(int bit = 0; word != 0; ++bit) {
-        if(word & 0x1) {
+        if(word & 0x1lu) {
             if(word != 1)
                 return -1;
-            return bit;
+            return offset + bit;
         }
         word >>= 1;
     }
@@ -187,7 +187,7 @@ int DynBitset::singleBit() const {
         if(data[word] != 0) {
             if(singlePos >= 0)
                 return -1;
-            singlePos = whichBit(data[word], word_size);
+            singlePos = whichBit(data[word], word_size, word * word_size);
         }
     }
     return singlePos;
@@ -199,7 +199,7 @@ std::string DynBitset::dump() const {
         Word cWord = data[word];
         for(size_t hexDigit = 0 ; hexDigit < word_size / 4; ++hexDigit) {
             char c = cWord % 16;
-            out += (c >= 10) ? ('A' + c) : ('0' + c);
+            out += (c >= 10) ? ('A' + c - 10) : ('0' + c);
             cWord >>= 4;
         }
     }

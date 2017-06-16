@@ -39,23 +39,23 @@ class DynBitset {
 
                 /// Value of the reference
                 inline operator bool() const {
-                    return (*word) & (1 << pos);
+                    return (*word) & (1lu << pos);
                 }
 
                 /// In-place flips the bit
                 Reference& flip() {
-                    (*word) ^= (1 << pos);
+                    (*word) ^= (1lu << pos);
                     return *this;
                 }
 
                 /// Sets the bit (slightly faster than ` = true`)
                 inline void set() {
-                    (*word) |= (1 << pos);
+                    (*word) |= (1lu << pos);
                 }
 
                 /// Resets the bit (slightly faster than ` = false`)
                 void reset() {
-                    (*word) &= ~(1 << pos);
+                    (*word) &= ~(1lu << pos);
                 }
 
             private:
@@ -87,7 +87,7 @@ class DynBitset {
 
         /// Constant bit access operator
         inline bool operator[](size_t pos) const {
-            return (data[pos/word_size]) & (1 << (pos % word_size));
+            return (data[pos/word_size]) & (1lu << (pos % word_size));
         }
 
         /// Alterable bit reference
@@ -146,7 +146,7 @@ class DynBitset {
 
         /** Aux function for `singleBit`, does the same on a single word.
          * Assumes every bit past `upTo` is false. */
-        int whichBit(Word word, size_t upTo) const;
+        int whichBit(Word word, size_t upTo, int offset = 0) const;
 
         const size_t size_;
         Word* data;
