@@ -393,7 +393,7 @@ void ullmannFindDepth(size_t depth,
             }
         }
 
-        if(!matr[depth].anyOver(hayId+1))
+        if(!matrDump[depth].anyOver(hayId+1))
             break;
 
         dumpPerm(matr, mapping);
