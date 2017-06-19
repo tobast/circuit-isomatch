@@ -169,7 +169,7 @@ int DynBitset::whichBit(DynBitset::Word word, size_t, int offset) const {
     else if(bottomResult >= 0)
         return -1;
     return topResult + nextSliceSize;
-    */
+    */ // FIXME
     for(int bit = 0; word != 0; ++bit) {
         if(word & 0x1lu) {
             if(word != 1)
@@ -182,8 +182,8 @@ int DynBitset::whichBit(DynBitset::Word word, size_t, int offset) const {
 }
 
 int DynBitset::singleBit() const {
-    int singlePos = -1;
-    for(size_t word = 0; word < nbWords() - 1; ++word) {
+    int singlePos = -2;
+    for(size_t word = 0; word < nbWords(); ++word) {
         if(data[word] != 0) {
             if(singlePos >= 0)
                 return -1;
