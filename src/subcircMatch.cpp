@@ -355,10 +355,11 @@ void ullmannFindDepth(size_t depth,
                 }
             }
             else {
-                freeHayVert[hayId].set();
+                freeHayVert[hayId].reset();
+                FIND_DEBUG(">> Picking %lu at %lu\n", hayId, depth);
                 ullmannFindDepth(depth + 1, freeHayVert, results, matr,
                         mapping, hayAdj, fullNeedle);
-                freeHayVert[hayId].reset();
+                freeHayVert[hayId].set();
             }
         }
 
