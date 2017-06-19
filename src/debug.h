@@ -1,7 +1,7 @@
 /** Few debug features. These flags should all be turned off in release. */
 
 #ifdef DEBUG
-#define DEBUG_FIND
+#define DEBUG_FIND_LOW
 #endif
 
 #ifdef DEBUG_ALL
@@ -22,3 +22,10 @@
 #else
 #define FIND_DEBUG(...) do {} while(false)
 #endif
+
+#ifdef DEBUG_FIND_LOW
+#define FIND_DEBUG_2(...) fprintf(stderr, __VA_ARGS__)
+#else
+#define FIND_DEBUG_2(...) do {} while(false)
+#endif
+

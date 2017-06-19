@@ -11,6 +11,8 @@
 #include "dyn_bitset.h"
 #include "debug.h"
 
+bool debugMode = false; // FIXME debug
+
 using namespace std;
 
 #ifdef DEBUG_FIND
@@ -141,33 +143,41 @@ bool isMatchFit(CircuitTree* match, CircuitTree* needleMatch,
     return true;
 }
 
+#define FIND_DEBUG_M(...) if(debugMode) fprintf(stderr, __VA_ARGS__)
+
 void dumpPerm(const PermMatrix& permMatrix, const FullMapping& mapping) {
 #ifndef DEBUG_FIND // UNUSED
     (void)(permMatrix);
     (void)(mapping);
 #endif//DEBUG_FIND
 
-#ifdef DEBUG_FIND
-    FIND_DEBUG("  ");
+    FIND_DEBUG_M("  ");
+    int cWire = 0;
+    for(const auto& vert: mapping.haystack.vertices) {
+        if(vert.type == Vertice::VertWire) {
+            FIND_DEBUG_M("%d", cWire % 10);
+            cWire++;
+        }
+    }
+    FIND_DEBUG_M("\n  ");
     for(const auto& vert: mapping.haystack.vertices)
-        FIND_DEBUG(vert.type == Vertice::VertWire ? "W" : "C");
-    FIND_DEBUG("\n");
-#endif
+        FIND_DEBUG_M(vert.type == Vertice::VertWire ? "W" : "C");
+    FIND_DEBUG_M("\n");
     for(size_t needleId = 0;
             needleId < mapping.needle.vertices.size(); ++needleId)
     {
-        FIND_DEBUG(
+        FIND_DEBUG_M(
                 mapping.needle.vertices[needleId].type == Vertice::VertWire ?
                     "W " : "C ");
         for(size_t hayId = 0; hayId < mapping.haystack.vertices.size();
                 ++hayId)
         {
-            FIND_DEBUG("%c", '0' + permMatrix[needleId][hayId]);
+            FIND_DEBUG_M("%c", '0' + permMatrix[needleId][hayId]);
         }
         if(mapping.needle.vertices[needleId].type == Vertice::VertWire)
-            FIND_DEBUG("  %s",
+            FIND_DEBUG_M("  %s",
                     mapping.needle.vertices[needleId].wire->name().c_str());
-        FIND_DEBUG("\n");
+        FIND_DEBUG_M("\n");
     }
 }
 
@@ -212,13 +222,13 @@ bool isActualMatch(const PermMatrix& perm, const FullMapping& mapping)
 
         if(!needlePart->equals(haystackPart)) {
             // MAYBE TODO: propagate down that it is not a match?
-            FIND_DEBUG("  > Not sub-equal\n");
+            FIND_DEBUG_M("  > Not sub-equal\n");
             return false;
         }
     }
 
     // Everything is fine now!
-    FIND_DEBUG("  > Found a match\n");
+    FIND_DEBUG_M("  > Found a match\n");
     return true;
 }
 
@@ -363,7 +373,7 @@ void ullmannFindDepth(size_t depth,
         const AdjacencyMatr& hayAdj,
         const CircuitGroup* fullNeedle)
 {
-    FIND_DEBUG("> Ullmann: depth %lu/%lu\n", depth,
+    FIND_DEBUG_M("> Ullmann: depth %lu/%lu\n", depth,
             mapping.needle.vertices.size());
     if(! (matr[depth] & freeHayVert).any())
         return;
@@ -386,7 +396,7 @@ void ullmannFindDepth(size_t depth,
             }
             else {
                 freeHayVert[hayId].reset();
-                FIND_DEBUG(">> Picking %lu at %lu\n", hayId, depth);
+                FIND_DEBUG_M(">> Picking %lu at %lu\n", hayId, depth);
                 ullmannFindDepth(depth + 1, freeHayVert, results, matr,
                         mapping, hayAdj, fullNeedle);
                 freeHayVert[hayId].set();
@@ -396,9 +406,9 @@ void ullmannFindDepth(size_t depth,
         if(!matrDump[depth].anyOver(hayId+1))
             break;
 
-        dumpPerm(matr, mapping);
+        //dumpPerm(matr, mapping);
         matr = matrDump;
-        dumpPerm(matr, mapping);
+        //dumpPerm(matr, mapping);
     }
 }
 
@@ -467,6 +477,7 @@ void findIn(vector<MatchResult>& results,
     }
 
     FIND_DEBUG("=== IN %s ===\n", haystack->name().c_str());
+    FIND_DEBUG_2("=== IN %s ===\n", haystack->name().c_str());
 
     // Filter out the matches that are not connected as needed
     {
@@ -540,6 +551,37 @@ void findIn(vector<MatchResult>& results,
         }
     }
 
+    if(haystack->name() == "alu") {
+        debugMode = true;
+        int wireId = 0;
+        for(const auto& vert: mapping.haystack.vertices) {
+            if(vert.type != Vertice::VertWire)
+                continue;
+            FIND_DEBUG_M("%02d: %s\n", wireId, vert.wire->name().c_str());
+            ++wireId;
+        }
+
+        WireId* selWire = needle->wireManager()->wire("sel");
+        size_t wexpid = 9;
+        FIND_DEBUG_M("Neigh:\n");
+        for(auto nei = selWire->adjacent_begin();
+                nei != selWire->adjacent_end(); ++nei)
+        {
+            size_t neiId = mapping.needle.circId.at(*nei);
+            for(size_t pos=0; pos < mapping.haystack.vertices.size(); ++pos)
+                FIND_DEBUG_M("%d", permMatrix[neiId][pos] == true);
+            FIND_DEBUG_M("  %02lu %d\n", neiId,
+                    (permMatrix[neiId] & hayAdj[wexpid]).any());
+        }
+        FIND_DEBUG_M("alu62 (%lu -> %s) adj:\n", wexpid,
+                mapping.haystack.vertices[wexpid].wire->name().c_str());
+        for(size_t pos=0; pos < mapping.haystack.vertices.size(); ++pos)
+            FIND_DEBUG_M("%d", hayAdj[wexpid][pos] == true);
+        FIND_DEBUG_M("\n`9` adj:\n");
+        for(size_t pos=0; pos < mapping.haystack.vertices.size(); ++pos)
+            FIND_DEBUG_M("%d", hayAdj[9][pos] == true);
+        FIND_DEBUG_M("\n");
+    }
     dumpPerm(permMatrix, mapping); // DEBUG
 
     // First refining
@@ -550,6 +592,10 @@ void findIn(vector<MatchResult>& results,
 
     // Ullmann's recursion
     ullmannFind(results, permMatrix, mapping, hayAdj, needle);
+    if(debugMode) {
+        debugMode = false;
+        //return;
+    }
 }
 
 }; // namespace
