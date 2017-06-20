@@ -307,7 +307,7 @@ MatchResult buildMatchResult(
     for(const auto& inp: fullNeedle->getInputs())
         res.inputs.push_back(mappedWire(inp->actual(), mapping, perm));
     for(const auto& out: fullNeedle->getOutputs())
-        res.inputs.push_back(mappedWire(out->actual(), mapping, perm));
+        res.outputs.push_back(mappedWire(out->actual(), mapping, perm));
     return res;
 }
 
