@@ -324,7 +324,9 @@ bool ullmannRefine(PermMatrix& matr,
                 return false;
 
             const Vertice& needleVert = mapping.needle.vertices[needleId];
-            for(size_t hayId = 0; hayId < matr.size(); ++hayId) {
+            for(size_t hayId = 0; hayId < mapping.haystack.vertices.size();
+                    ++hayId)
+            {
                 if(!matr[needleId][hayId])
                     continue;
 
