@@ -289,7 +289,8 @@ WireId* mappedWire(WireId* of,
 MatchResult buildMatchResult(
         const CircuitGroup* fullNeedle,
         const FullMapping& mapping,
-        const PermMatrix& perm)
+        const PermMatrix& perm,
+        DynBitset& impliedHay)
 {
     MatchResult res;
     for(const auto& needlePart: fullNeedle->getChildrenCst()) {
@@ -301,6 +302,7 @@ MatchResult buildMatchResult(
         if(mapping.haystack.vertices[matchId].type != Vertice::VertCirc)
             throw ImplementationBug("Bad corresp type `buildMatchResult`");
 #endif
+        impliedHay[matchId].set();
         const Vertice& mapped = mapping.haystack.vertices.at(matchId);
         res.parts.push_back(mapped.circ);
     }
@@ -371,6 +373,7 @@ void ullmannFindDepth(size_t depth,
         DynBitset& freeHayVert,
         vector<MatchResult>& results,
         PermMatrix& matr,
+        DynBitset& toUnmapHaystack,
         const FullMapping& mapping,
         const AdjacencyMatr& hayAdj,
         const CircuitGroup* fullNeedle)
@@ -389,28 +392,33 @@ void ullmannFindDepth(size_t depth,
         matr[depth].reset();
         matr[depth][hayId].set();
 
+        DynBitset toUnmapCur(mapping.haystack.vertices.size());
         if(ullmannRefine(matr, mapping, hayAdj)) {
             if(depth == mapping.needle.vertices.size() - 1) {
                 if(isActualMatch(matr, mapping)) {
                     results.push_back(buildMatchResult(
-                                fullNeedle, mapping, matr));
+                                fullNeedle, mapping, matr, toUnmapCur));
                 }
             }
             else {
                 freeHayVert[hayId].reset();
                 FIND_DEBUG_M(">> Picking %lu at %lu\n", hayId, depth);
                 ullmannFindDepth(depth + 1, freeHayVert, results, matr,
-                        mapping, hayAdj, fullNeedle);
+                        toUnmapCur, mapping, hayAdj, fullNeedle);
                 freeHayVert[hayId].set();
             }
         }
 
+        toUnmapHaystack |= toUnmapCur;
+
         if(!matrDump[depth].anyOver(hayId+1))
             break;
 
-        //dumpPerm(matr, mapping);
+        if(toUnmapCur.any()) {
+            for(auto& row: matrDump)
+                row &= ~toUnmapCur;
+        }
         matr = matrDump;
-        //dumpPerm(matr, mapping);
     }
 }
 
@@ -422,7 +430,8 @@ void ullmannFind(vector<MatchResult>& results,
 {
     DynBitset freeHayVert(mapping.haystack.vertices.size());
     freeHayVert.flip(); // Everything's free to begin with
-    ullmannFindDepth(0, freeHayVert, results, matr, mapping, hayAdj,
+    DynBitset toUnmap(mapping.haystack.vertices.size());
+    ullmannFindDepth(0, freeHayVert, results, matr, toUnmap, mapping, hayAdj,
             fullNeedle);
 }
 
