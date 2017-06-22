@@ -416,10 +416,13 @@ void ullmannFind(vector<MatchResult>& results,
         PermMatrix& matr,
         const FullMapping& mapping,
         const AdjacencyMatr& hayAdj,
-        const CircuitGroup* fullNeedle)
+        const CircuitGroup* fullNeedle,
+        const set<CircuitTree*> alreadyImplied)
 {
     DynBitset freeHayVert(mapping.haystack.vertices.size());
     freeHayVert.flip(); // Everything's free to begin with
+    for(const auto& circ: alreadyImplied)
+        freeHayVert[mapping.haystack.circId.at(circ)].reset();
     DynBitset toUnmap(mapping.haystack.vertices.size());
     ullmannFindDepth(0, freeHayVert, results, matr, toUnmap, mapping, hayAdj,
             fullNeedle);
@@ -440,6 +443,13 @@ void findIn(vector<MatchResult>& results,
                 alreadyImplied.insert(child);
         }
     }
+
+    if(haystack->wireManager()->wires().size()
+            < needle->wireManager()->wires().size())
+        return;
+    if(haystack->getChildrenCst().size() - alreadyImplied.size()
+            < needle->getChildrenCst().size())
+        return;
 
 
     map<CircuitTree*, set<CircuitTree*> > singleMatches;
@@ -557,10 +567,8 @@ void findIn(vector<MatchResult>& results,
     if(!ullmannRefine(permMatrix, mapping, hayAdj))
         return;
 
-    dumpPerm(permMatrix, mapping); // DEBUG
-
     // Ullmann's recursion
-    ullmannFind(results, permMatrix, mapping, hayAdj, needle);
+    ullmannFind(results, permMatrix, mapping, hayAdj, needle, alreadyImplied);
 }
 
 }; // namespace
