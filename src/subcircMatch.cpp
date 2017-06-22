@@ -9,6 +9,7 @@
 
 #include "circuitGroup.h"
 #include "dyn_bitset.h"
+#include "logging.h"
 #include "debug.h"
 
 using namespace std;
@@ -539,12 +540,20 @@ void findIn(vector<MatchResult>& results,
             permMatrix[needleId][hayId].set();
         }
     }
+
+    // Check for dangling wires that can slow down the whole find
+    for(const auto& needleWire: needle->wireManager()->wires()) {
+        if(needleWire->connectedCirc().size() == 0
+                && needleWire->connectedPins().size() == 0)
+        {
+            LOG_WARNING("Dangling wire %s in needle",
+                    needleWire->name().c_str());
+        }
+    }
+
     // Setting the possibly adjacent wires (wireFit + degrees)
     // Let's not be clever for now, and (maybe) enhance this part later
     for(const auto& hayWire: haystack->wireManager()->wires()) {
-        if(wireFit.find(hayWire) == wireFit.end()) // Not inserted, abort
-            continue;
-
         size_t hayId = mapping.haystack.wireId[hayWire];
 
         for(const auto& needleWire: needle->wireManager()->wires()) {
@@ -552,7 +561,14 @@ void findIn(vector<MatchResult>& results,
                         >= needleWire->connectedCirc().size())
                     && (hayWire->connectedPins().size()
                         >= needleWire->connectedPins().size())
-                    && wireFit[hayWire].fitFor(needleWire))
+                    && (
+                        wireFit.find(hayWire) == wireFit.end()
+                        || wireFit[hayWire].fitFor(needleWire)))
+                    /* If hayWire is not in wireFit, that means that the
+                     * given haystack wire was never connected to anything, in
+                     * which case the number of connections already tested are
+                     * enough to know whether this is a potential match or not
+                     */
             {
                 // Fit for this role
                 size_t needleId = mapping.needle.wireId[needleWire];
