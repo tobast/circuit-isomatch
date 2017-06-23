@@ -407,3 +407,69 @@ sign_t sign_with_precision(circuit_handle circuit, unsigned precision_level) {
         return 0;
     }
 }
+
+// === Circuit matching
+match_results* subcircuit_find(circuit_handle needle, circuit_handle haystack){
+    try {
+        std::vector<MatchResult> res = matchSubcircuit(
+                circuitOfHandle<CircuitGroup>(needle),
+                circuitOfHandle<CircuitGroup>(haystack));
+        match_results* outList = nullptr;
+        for(const auto& matchRes: res) {
+            match_results* cMatchLink = new match_results;
+            single_match& cMatch = cMatchLink->match;
+            cMatchLink->next = outList;
+            outList = cMatchLink;
+
+            for(const auto& part: matchRes.parts) {
+                circuit_list* nLink = new circuit_list;
+                nLink->next = cMatch.parts;
+                cMatch.parts = nLink;
+                nLink->circ = part;
+            }
+            for(const auto& inWire: matchRes.inputs) {
+                wire_list* nLink = new wire_list;
+                nLink->next = cMatch.inputs;
+                cMatch.inputs = nLink;
+                nLink->wire = inWire->name().c_str();
+            }
+            for(const auto& outWire: matchRes.outputs) {
+                wire_list* nLink = new wire_list;
+                nLink->next = cMatch.outputs;
+                cMatch.outputs = nLink;
+                nLink->wire = outWire->name().c_str();
+            }
+        }
+        return outList;
+    } catch(const IsomError& e) {
+        handleError(e);
+        return nullptr;
+    }
+}
+
+void free_circuit_list(circuit_list* list) {
+    while(list != nullptr) {
+        circuit_list* toDel = list;
+        list = list->next;
+        delete toDel;
+    }
+}
+
+void free_wire_list(wire_list* list) {
+    while(list != nullptr) {
+        wire_list* toDel = list;
+        list = list->next;
+        delete toDel;
+    }
+}
+
+void free_match_result(match_results* res) {
+    while(res != nullptr) {
+        free_circuit_list(res->match.parts);
+        free_wire_list(res->match.inputs);
+        free_wire_list(res->match.outputs);
+        match_results* toDel = res;
+        res = res->next;
+        delete toDel;
+    }
+}

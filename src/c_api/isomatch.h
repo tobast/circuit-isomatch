@@ -27,6 +27,31 @@ typedef void* circuit_handle;   ///< Value representing a circuit
 typedef void* expr_handle;      ///< Value representing an expression
 typedef const char* wire_handle;    ///< A wire name
 
+/// Linked list of `circuit_handle`
+typedef struct circuit_list {
+    circuit_handle circ;             ///< Data for this element
+    struct circuit_list* next;       ///< Next element in the list
+} circuit_list;
+
+/// Linked list of `wire_handle`
+typedef struct wire_list {
+    wire_handle wire;               ///< Data for this element
+    struct wire_list* next;         ///< Next element in the list
+} wire_list;
+
+/// Result for a single subcircuit-find match
+typedef struct {
+    circuit_list* parts;
+    wire_list* inputs;
+    wire_list* outputs;
+} single_match;
+
+/// Subcircuit-find match results
+typedef struct match_results {
+    single_match match;             ///< Data for this element
+    struct match_results* next;     ///< Next element in the list
+} match_results;
+
 /*****************************************************************************/
 /* Error handling                                                            */
 /*****************************************************************************/
@@ -250,7 +275,17 @@ sign_t sign_with_precision(circuit_handle circuit, unsigned precision_level);
 /* Circuit matching                                                          */
 /*****************************************************************************/
 
-// TODO TO BE IMPLEMENTED
+/** Finds every disjoint occurrence of `needle` in `haystack`.
+ * If two possible occurrences of `needle` are overlapping in `haystack`, the
+ * match that will be returned is undefined (yet deterministic).
+ * The list structures, etc. are `malloc`'d and must be free'd on the
+ * caller's side whenever they're not needed anymore using `free_match_result`.
+ */
+match_results* subcircuit_find(circuit_handle needle, circuit_handle haystack);
+
+/** Free a `match_results`. This *DOES NOT* free the `needle` and `haystack`
+ * circuits used during the match! */
+void free_match_results(match_results* res);
 
 #ifdef __cplusplus
 }
