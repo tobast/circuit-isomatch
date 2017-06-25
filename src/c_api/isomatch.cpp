@@ -463,7 +463,7 @@ void free_wire_list(wire_list* list) {
     }
 }
 
-void free_match_result(match_results* res) {
+void free_match_results(match_results* res) {
     while(res != nullptr) {
         free_circuit_list(res->match.parts);
         free_wire_list(res->match.inputs);
