@@ -62,12 +62,13 @@ clean:
 test: sig.bin dot.bin capi.cbin equal.bin
 	./run_sigtests.py
 	./dot.bin circ/processor.circ > /dev/null
-	valgrind -q ./dot.bin circ/processor.circ > /dev/null
 	./sig.bin circ/processor.circ > /dev/null
-	valgrind -q ./sig.bin circ/processor.circ > /dev/null
 	./capi.cbin > /dev/null
-	valgrind -q ./capi.cbin > /dev/null
+	[ "$$(./capi.cbin 2>/dev/null | tail -n 1)" = "2 MUX" ]
 	[ "$$(./equal.bin circ/processor.circ)" = "11" ]
+	valgrind -q ./dot.bin circ/processor.circ > /dev/null
+	valgrind -q ./sig.bin circ/processor.circ > /dev/null
+	valgrind -q ./capi.cbin > /dev/null
 	valgrind -q ./equal.bin circ/processor.circ > /dev/null
 	@echo -e "\e[92m>> All tests passed! :)\e[0m"
 
