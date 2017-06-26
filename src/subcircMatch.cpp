@@ -64,9 +64,8 @@ class WireFit {
         /** Add a connection on this wire from a circuit of signature
          * `inSig`, from its `pin`-th pin, which is an input of the circuit
          * iff `in` is true. */
-        void connected(sign_t inSig, bool /* in */, int /* pin */) {
-            ++conns[ConnType(inSig, false, 0)];
-            // FIXME ^ use actual values
+        void connected(sign_t inSig, bool in, int pin) {
+            ++conns[ConnType(inSig, in, pin)];
         }
 
         /** Check whether this wire has the required connections to act as
@@ -80,8 +79,20 @@ class WireFit {
                 for(auto circ = role->adjacent_begin();
                         circ != role->adjacent_end(); ++circ)
                 {
-                    ConnType cConn(localSign(*circ), false, 0);
-                    // FIXME ^ use actual values
+                    bool isInput = true;
+                    int pinPos = 0;
+                    for(auto circWire = (*circ)->io_begin();
+                            circWire != (*circ)->io_end();
+                            ++circWire, ++pinPos)
+                    {
+                        if(circWire == (*circ)->inp_end()) {
+                            pinPos = 0;
+                            isInput = false;
+                        }
+                        if(**circWire == *role)
+                            break;
+                    }
+                    ConnType cConn(localSign(*circ), isInput, pinPos);
 
                     ++usedConns[cConn];
                     if(usedConns[cConn] > conns[cConn]) {
@@ -99,13 +110,13 @@ class WireFit {
             ConnType(sign_t inSig, bool in, int pin) :
                 inSig(inSig), in(in), pin(pin) {}
             bool operator==(const ConnType& e) {
-                return inSig == e.inSig && in == e.in && pin == e.in;
+                return inSig == e.inSig && in == e.in && pin == e.pin;
             }
             bool operator<(const ConnType& e) const {
                 return
                     (inSig < e.inSig)
                     || (inSig == e.inSig && in < e.in)
-                    || (inSig == e.inSig && in == e.in && pin < e.in);
+                    || (inSig == e.inSig && in == e.in && pin < e.pin);
             }
 
             sign_t inSig;
