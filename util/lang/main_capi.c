@@ -65,7 +65,13 @@ int main() {
     printf("%d MUX\n", matches);
 
     free_match_results(res);
-    free_circuit(g_root);
+
+    // Should preserve the whole `g_needle` and delete `g_root`
+    isom_mark_circuit(c_needle_not);
+    isom_sweep();
+
+    // Delete `g_needle` by itself - this will fail if only c_needle_not was
+    // saved
     free_circuit(g_needle);
 
     return 0;

@@ -69,6 +69,7 @@ typedef enum isom_rc {
     ISOM_RC_NO_PARENT = 3, ///< A circuit outside of a group was used, while
                            ///< it needed to be in a group
     ISOM_RC_BADHEX = 4,    ///< Non hexadecimal string was supplied
+    ISOM_RC_BAD_FREE = 5,  ///< Attempted to `free` an unregistered pointer
     ISOM_RC_OUT_OF_RANGE = 6, ///< A supplied (int) value was out of range
     ISOM_RC_NOT_CONNECTED = 7, ///< This pin is not connected to any wire
     ISOM_RC_ERROR   = 255, ///< An undefined error occurred
@@ -133,7 +134,8 @@ enum isom_expr_unop_cst {
  */
 int freeze_circuit(circuit_handle circuit);
 
-/** Free the given previously created circuit
+/** Free the given previously created circuit's component (that is, including
+ * its ancestors and descendants).
  * @return 0 on success, > 0 on failure
  */
 int free_circuit(circuit_handle circuit);
@@ -304,6 +306,27 @@ match_results* subcircuit_find(circuit_handle needle, circuit_handle haystack);
 /** Free a `match_results`. This *DOES NOT* free the `needle` and `haystack`
  * circuits used during the match! */
 void free_match_results(match_results* res);
+
+/*****************************************************************************/
+/* Mark and sweep                                                            */
+/*****************************************************************************/
+
+/** This mark and sweep algorithm works on whole components only. This means
+ * that if you mark a circuit, every descendant and ancestor of this circuit
+ * will be marked as well. */
+
+/** Clears all the mark and sweep's marks. This is automatically done by
+ * `isom_sweep` after a pass, but can also be done manually. */
+void isom_clear_marks();
+
+/** Marks the given circuit handle, all its ancestors and its descendants
+ * (circuits and expressions)as "in use" for the next `isom_sweep` pass */
+void isom_mark_circuit(circuit_handle handle);
+
+/** Sweeps (frees every value that is not marked, directly or recursively) the
+ * previously allocated values. */
+void isom_sweep();
+
 
 #ifdef __cplusplus
 }

@@ -7,11 +7,21 @@
 
 #include <exception>
 #include <type_traits>
+#include <set>
 #include <cstring>
+
+using namespace std;
 
 /******************/
 /* Internal state */
 /******************/
+
+struct MarkSweepState {
+    std::set<CircuitTree*> roots;
+    std::set<CircuitTree*> marks;
+};
+
+static MarkSweepState markSweepState;
 
 static isom_rc lastError = ISOM_RC_OK;
 
@@ -73,6 +83,34 @@ static void setParent(circuit_handle parent, CircuitTree* self) {
     par->addChild(self);
 }
 
+/** Finds the root of a component, iterating `ancestor()`. */
+CircuitTree* componentRootOf(CircuitTree* circ) {
+    while(circ->ancestor() != nullptr)
+        circ = circ->ancestor();
+    return circ;
+}
+
+/** Internal function to free a `CircuitTree*`'s component. Returns the
+ * iterator to the next `markSweepState.roots` element. */
+static std::set<CircuitTree*>::iterator freeCircuitPtr(
+       std::set<CircuitTree*>::iterator circuit)
+{
+    delete *circuit;
+    auto nextRootIter = markSweepState.roots.erase(circuit);
+    return nextRootIter;
+}
+
+/** Internal function to free a `CircuitTree*`'s component. Returns the
+ * iterator to the next `markSweepState.roots` element. If `circuit`'s root is
+ * somehow absent from the registered roots, `begin` is returned. */
+static std::set<CircuitTree*>::iterator freeCircuitPtr(CircuitTree* circuit) {
+    circuit = componentRootOf(circuit);
+    auto circIter = markSweepState.roots.find(circuit);
+    if(circIter == markSweepState.roots.end())
+        throw IsomError(ISOM_RC_BAD_FREE);
+    return freeCircuitPtr(circIter);
+}
+
 /**********************/
 /* API implementation */
 /**********************/
@@ -95,6 +133,9 @@ const char* isom_strerror(isom_rc err_code) {
                 "context. This applies eg. when you try to access a wire.";
         case ISOM_RC_BADHEX:
             return "the supplied hex string contains non-[0-9a-fA-F] char(s).";
+        case ISOM_RC_BAD_FREE:
+            return "the supplied pointer could not be found among registered "
+                "groups.";
         case ISOM_RC_OUT_OF_RANGE:
             return "integer parameter out of range.";
         case ISOM_RC_NOT_CONNECTED:
@@ -118,7 +159,7 @@ int freeze_circuit(circuit_handle circuit) {
 
 int free_circuit(circuit_handle circuit) {
     try {
-        delete circuitOfHandle(circuit);
+        freeCircuitPtr(circuitOfHandle(circuit));
         return ISOM_RC_OK;
     } catch(const IsomError& e) {
         return handleError(e);
@@ -212,6 +253,7 @@ circuit_handle build_delay(circuit_handle parent,
 circuit_handle build_group(const char* name) {
     try {
         CircuitGroup* out = new CircuitGroup(name);
+        markSweepState.roots.insert(out);
         return out;
     } catch(const IsomError& e) {
         handleError(e);
@@ -222,7 +264,11 @@ circuit_handle build_group(const char* name) {
 int build_group_add_child(circuit_handle self, circuit_handle child) {
     try {
         CircuitGroup* group = circuitOfHandle<CircuitGroup>(self);
-        group->addChild(circuitOfHandle(child));
+        CircuitTree* childPtr = circuitOfHandle(child);
+        group->addChild(childPtr);
+        auto childRoot = markSweepState.roots.find(childPtr);
+        if(childRoot != markSweepState.roots.end())
+            markSweepState.roots.erase(childRoot);
         return ISOM_RC_OK;
     } catch(const IsomError& e) {
         return handleError(e);
@@ -540,4 +586,29 @@ void free_match_results(match_results* res) {
         res = res->next;
         delete toDel;
     }
+}
+
+// === Mark & sweep
+
+void isom_clear_marks() {
+    markSweepState.marks.clear();
+}
+
+void isom_mark_circuit(circuit_handle handle) {
+    markSweepState.marks.insert(componentRootOf(circuitOfHandle(handle)));
+}
+
+void isom_sweep() {
+    auto cMark = markSweepState.marks.begin();
+    auto cRoot = markSweepState.roots.begin();
+    while(cRoot != markSweepState.roots.end()) {
+        if(*cRoot != *cMark)
+            cRoot = freeCircuitPtr(*cRoot);
+        else {
+            ++cRoot;
+            ++cMark;
+        }
+    }
+
+    isom_clear_marks();
 }
