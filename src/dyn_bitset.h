@@ -146,7 +146,7 @@ class DynBitset {
 
         /** Aux function for `singleBit`, does the same on a single word.
          * Assumes every bit past `upTo` is false. */
-        int whichBit(Word word, size_t upTo, int offset = 0) const;
+        int whichBit(Word word, int offset = 0) const;
 
         const size_t size_;
         Word* data;
