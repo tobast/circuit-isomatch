@@ -57,9 +57,10 @@ int main() {
     freeze_circuit(g_needle);
 
     match_results* res = subcircuit_find(g_needle, g_root);
+    match_results* cRes = res;
     int matches = 0;
-    while(res != NULL) {
-        res = res->next;
+    while(cRes != NULL) {
+        cRes = cRes->next;
         ++matches;
     }
     printf("%d MUX\n", matches);

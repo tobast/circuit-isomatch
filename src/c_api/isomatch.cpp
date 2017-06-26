@@ -7,6 +7,7 @@
 
 #include <exception>
 #include <type_traits>
+#include <cstring>
 
 /******************/
 /* Internal state */
@@ -415,26 +416,31 @@ match_results* subcircuit_find(circuit_handle needle, circuit_handle haystack){
                 circuitOfHandle<CircuitGroup>(needle),
                 circuitOfHandle<CircuitGroup>(haystack));
         match_results* outList = nullptr;
+
         for(const auto& matchRes: res) {
             match_results* cMatchLink = new match_results;
+            memset(cMatchLink, 0x00, sizeof(match_results));
             single_match& cMatch = cMatchLink->match;
             cMatchLink->next = outList;
             outList = cMatchLink;
 
             for(const auto& part: matchRes.parts) {
                 circuit_list* nLink = new circuit_list;
+                memset(nLink, 0x00, sizeof(circuit_list));
                 nLink->next = cMatch.parts;
                 cMatch.parts = nLink;
                 nLink->circ = part;
             }
             for(const auto& inWire: matchRes.inputs) {
                 wire_list* nLink = new wire_list;
+                memset(nLink, 0x00, sizeof(wire_list));
                 nLink->next = cMatch.inputs;
                 cMatch.inputs = nLink;
                 nLink->wire = inWire->name().c_str();
             }
             for(const auto& outWire: matchRes.outputs) {
                 wire_list* nLink = new wire_list;
+                memset(nLink, 0x00, sizeof(wire_list));
                 nLink->next = cMatch.outputs;
                 cMatch.outputs = nLink;
                 nLink->wire = outWire->name().c_str();
