@@ -70,7 +70,6 @@ typedef enum isom_rc {
     ISOM_RC_BADHEX = 4,    ///< Non hexadecimal string was supplied
     ISOM_RC_ERROR   = 255, ///< An undefined error occurred
 } isom_rc;
-//TODO complete this list
 
 /*****************************/
 /* Error reporting functions */
@@ -233,7 +232,7 @@ expr_handle build_expr_const(unsigned val);
 /** Build a long constant expression node
  * @param value Hexadecimal string [0-9a-fA-F]+
  */
-expr_handle build_expr_longconst(const char* value); // TODO
+expr_handle build_expr_longconst(const char* value);
 
 /// Build a variable expression node referring to the `n`th input of the gate
 expr_handle build_expr_var(int input_pin);

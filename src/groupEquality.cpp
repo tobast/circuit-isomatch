@@ -232,7 +232,7 @@ namespace groupEquality {
                 return false;
             }
 
-            // TODO split again on adjacent wires' signatures
+            // MAYBE TODO split again on adjacent wires' signatures
 
             if(maxPermutations >= 0) {
                 // Check if we have too many permutations -- for real this time
@@ -248,8 +248,8 @@ namespace groupEquality {
             }
 
             // Now try all the remaining permutations.
-            // TODO some clever heuristic to enumerate the permutations in a
-            // clever order?
+            // MAYBE TODO some clever heuristic to enumerate the permutations
+            // in a clever order?
 
             const groupEquality::SigSplit& leftSplit = sigSplit[0];;
             const groupEquality::SigSplit& rightSplit = sigSplit[1];;
