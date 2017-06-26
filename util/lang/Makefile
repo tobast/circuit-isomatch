@@ -59,10 +59,12 @@ aux.o: aux.cpp parser.tab.hpp
 clean:
 	rm -rf *.{c,}bin *.o *.yy.{cpp,c} *.tab.{cpp,c,h,hpp}
 
-test: sig.bin dot.bin capi.cbin equal.bin
+test: sig.bin dot.bin find.bin capi.cbin equal.bin
 	./run_sigtests.py
 	./dot.bin circ/processor.circ > /dev/null
 	./sig.bin circ/processor.circ > /dev/null
+	[ "$$(./find.bin circ/processor.circ circ/mux.circ | head -n 1)" = \
+		"73 matches" ]
 	./capi.cbin > /dev/null
 	[ "$$(./capi.cbin 2>/dev/null | tail -n 1)" = "2 MUX" ]
 	[ "$$(./equal.bin circ/processor.circ)" = "11" ]
