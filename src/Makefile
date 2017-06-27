@@ -28,7 +28,7 @@ OBJS = \
 
 ###############################################################################
 
-all: debug
+all: release
 
 debug: OPTFLAGS += -O0 -g
 debug: CXXFLAGS += -DDEBUG
