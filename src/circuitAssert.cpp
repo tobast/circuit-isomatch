@@ -14,10 +14,12 @@ void CircuitAssert::InnerIoIter::operator++() {
 CircuitAssert::CircuitAssert(const std::string& name,
         ExpressionBase* expr) :
     gateName(name), gateExpr(expr)
-{}
+{
+    expr->addRef();
+}
 
 CircuitAssert::~CircuitAssert() {
-    delete gateExpr;
+    gateExpr->deleteSelf();
 }
 
 void CircuitAssert::addInput(WireId* wire) {

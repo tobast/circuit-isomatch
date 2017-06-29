@@ -25,7 +25,7 @@ CircuitComb::CircuitComb()
 
 CircuitComb::~CircuitComb() {
     for(auto expr : gateExprs)
-        delete expr;
+        expr->deleteSelf();
 }
 
 void CircuitComb::addInput(WireId* input) {
@@ -37,6 +37,7 @@ void CircuitComb::addOutput(ExpressionBase* expr, WireId* wire) {
     gateOutputs.push_back(wire);
     wire->connect(this);
     gateExprs.push_back(expr);
+    expr->addRef();
 }
 
 sign_t CircuitComb::innerSignature() const {

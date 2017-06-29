@@ -6,6 +6,7 @@
 
 #include "signatureConstants.h"
 #include <string>
+#include "debug.h"
 
 namespace expr {
 
@@ -59,7 +60,8 @@ class BadHex : public std::exception {};
 
 /** Base expression type, inherited by every "real" expression type */
 struct ExpressionBase {
-    ExpressionBase(const expr::ExpressionType& type) : type(type) {}
+    ExpressionBase(const expr::ExpressionType& type)
+        : type(type), refcount(0) {}
     virtual ~ExpressionBase() {}
     expr::ExpressionType type;    ///< Type of the expression (used for casts)
 
@@ -69,8 +71,27 @@ struct ExpressionBase {
     /** Check whether two experessions are formally equal */
     bool equals(const ExpressionBase& oth) const;
 
+    /// The object is referenced somewhere
+    inline void addRef() {
+        refcount++;
+    }
+
+    /// Call this instead of `delete`
+    void deleteSelf() {
+        refcount--;
+        if(refcount == 0) {
+            FIND_DEBUG("### Actual delete\n");
+            delete this;
+        }
+        else
+            FIND_DEBUG("### Postponing delete\n");
+    }
+
     private:
         virtual bool innerEqual(const ExpressionBase& oth) const = 0;
+
+    protected:
+        int refcount;
 };
 
 /** Integer constant (`ExprConst`) */
@@ -120,14 +141,18 @@ struct ExpressionVar : ExpressionBase {
 };
 
 /** Binary operator expression (`ExprBinOp`) */
-struct ExpressionBinOp : ExpressionBase {
+struct ExpressionBinOp : public ExpressionBase {
     ExpressionBinOp(ExpressionBase* left,
             ExpressionBase* right,
             expr::ExpressionBinOperator op) :
-        ExpressionBase(expr::ExprBinOp), left(left), right(right), op(op) {}
+        ExpressionBase(expr::ExprBinOp), left(left), right(right), op(op)
+    {
+        left->addRef();
+        right->addRef();
+    }
     virtual ~ExpressionBinOp() {
-        delete left;
-        delete right;
+        left->deleteSelf();
+        right->deleteSelf();;
     }
 
     ExpressionBase *left, *right;
@@ -142,9 +167,12 @@ struct ExpressionBinOp : ExpressionBase {
 /** Unary operator expression (`ExprUnOp`) */
 struct ExpressionUnOp : ExpressionBase {
     ExpressionUnOp(ExpressionBase* expr, expr::ExpressionUnOperator op) :
-       ExpressionBase(expr::ExprUnOp), expr(expr), op(op) {}
+       ExpressionBase(expr::ExprUnOp), expr(expr), op(op)
+    {
+        expr->addRef();
+    }
     virtual ~ExpressionUnOp() {
-        delete expr;
+        expr->deleteSelf();
     }
 
     ExpressionBase *expr;           ///< Sub-expression
@@ -161,9 +189,12 @@ struct ExpressionUnOpCst : ExpressionBase {
     ExpressionUnOpCst(ExpressionBase* expr,
             int val,
             expr::ExpressionUnOperatorCst op) :
-        ExpressionBase(expr::ExprUnOpCst), expr(expr), val(val), op(op) {}
+        ExpressionBase(expr::ExprUnOpCst), expr(expr), val(val), op(op)
+    {
+        expr->addRef();
+    }
     virtual ~ExpressionUnOpCst() {
-        delete expr;
+        expr->deleteSelf();
     }
 
     ExpressionBase *expr;
@@ -179,9 +210,12 @@ struct ExpressionUnOpCst : ExpressionBase {
 /** Take a subword out of a word (`ExprSlice`) */
 struct ExpressionSlice : ExpressionBase {
     ExpressionSlice(ExpressionBase* expr, unsigned beg, unsigned end) :
-        ExpressionBase(expr::ExprSlice), expr(expr), beg(beg), end(end) {}
+        ExpressionBase(expr::ExprSlice), expr(expr), beg(beg), end(end)
+    {
+        expr->addRef();
+    }
     virtual ~ExpressionSlice() {
-        delete expr;
+        expr->deleteSelf();
     }
 
     ExpressionBase *expr;
@@ -197,10 +231,14 @@ struct ExpressionSlice : ExpressionBase {
 /** Concatenate two words (`ExprMerge`) */
 struct ExpressionMerge : ExpressionBase {
     ExpressionMerge(ExpressionBase* left, ExpressionBase* right) :
-        ExpressionBase(expr::ExprMerge), left(left), right(right) {}
+        ExpressionBase(expr::ExprMerge), left(left), right(right)
+    {
+        left->addRef();
+        right->addRef();
+    }
     virtual ~ExpressionMerge() {
-        delete left;
-        delete right;
+        left->deleteSelf();
+        right->deleteSelf();
     };
 
     ExpressionBase *left, *right;

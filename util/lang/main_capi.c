@@ -4,6 +4,7 @@
 int main() {
     // Let's hardcode a circuit \o/
 
+    expr_handle expr_not0 = build_expr_unop(UNot, build_expr_var(0));
     circuit_handle g_root = build_group("root");
     build_group_add_input(g_root, "p1", "p1");
     build_group_add_input(g_root, "p2", "p2");
@@ -28,14 +29,12 @@ int main() {
     build_tristate(g_root, "sub_out", "out", "delay_out");
     circuit_handle c_delay_not = build_comb(g_root);
     build_comb_add_input(c_delay_not, "delay_out");
-    build_comb_add_output(c_delay_not, "delay_out_not",
-            build_expr_unop(UNot, build_expr_var(0)));
+    build_comb_add_output(c_delay_not, "delay_out_not", expr_not0);
     build_tristate(g_root, "p2", "out", "delay_out_not");
 
     circuit_handle c_mux1_not = build_comb(g_root);
     build_comb_add_input(c_mux1_not, "p1");
-    build_comb_add_output(c_mux1_not, "np1",
-            build_expr_unop(UNot, build_expr_var(0)));
+    build_comb_add_output(c_mux1_not, "np1", expr_not0);
     build_tristate(g_root, "p2", "mux1out", "p1");
     build_tristate(g_root, "p3", "mux1out", "np1");
 
