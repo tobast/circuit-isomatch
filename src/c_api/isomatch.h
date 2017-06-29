@@ -14,6 +14,7 @@
  **/
 
 #include <stdint.h>
+#include <stdlib.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -68,6 +69,8 @@ typedef enum isom_rc {
     ISOM_RC_NO_PARENT = 3, ///< A circuit outside of a group was used, while
                            ///< it needed to be in a group
     ISOM_RC_BADHEX = 4,    ///< Non hexadecimal string was supplied
+    ISOM_RC_OUT_OF_RANGE = 6, ///< A supplied (int) value was out of range
+    ISOM_RC_NOT_CONNECTED = 7, ///< This pin is not connected to any wire
     ISOM_RC_ERROR   = 255, ///< An undefined error occurred
 } isom_rc;
 
@@ -258,6 +261,22 @@ expr_handle build_expr_merge(expr_handle left, expr_handle right);
 
 /// Free the given previously created expression
 int free_expression(expr_handle expr);
+
+/*****************************************************************************/
+/* Accessors                                                                 */
+/*****************************************************************************/
+
+/// Returns the number of inputs of a given circuit. Returns -1 on error.
+int isom_input_count(circuit_handle circuit);
+
+/// Returns the number of outputs of a given circuit. Returns -1 on error.
+int isom_output_count(circuit_handle circuit);
+
+/// Returns the handle of the nth input wire (starting with 0) of `circuit`
+wire_handle isom_nth_input(circuit_handle circuit, size_t wireId);
+
+/// Returns the handle of the nth output wire (starting with 0) of `circuit`
+wire_handle isom_nth_output(circuit_handle circuit, size_t wireId);
 
 /*****************************************************************************/
 /* Signature                                                                 */

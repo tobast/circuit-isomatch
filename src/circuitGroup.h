@@ -198,6 +198,12 @@ class CircuitGroup : public CircuitTree {
         /// Get the group's name
         const std::string& name() const { return name_; }
 
+        // Documentation in CircuitTree*
+        size_t inputCount() const;
+        size_t outputCount() const;
+        WireId* nth_input(size_t circId) const;
+        WireId* nth_output(size_t circId) const;
+
         void toDot(std::basic_ostream<char>& out, int indent=0);
 
     protected:

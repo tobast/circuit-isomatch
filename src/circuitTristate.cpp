@@ -32,6 +32,28 @@ bool CircuitTristate::innerEqual(CircuitTree*) {
     return true; // No inner data
 }
 
+size_t CircuitTristate::inputCount() const {
+    return 2;
+}
+
+size_t CircuitTristate::outputCount() const {
+    return 1;
+}
+
+WireId* CircuitTristate::nth_input(size_t circId) const {
+    if(circId == 0)
+        return wireInput;
+    else if(circId == 1)
+        return wireEnable;
+    return nullptr;
+}
+
+WireId* CircuitTristate::nth_output(size_t circId) const {
+    if(circId == 0)
+        return wireOutput;
+    return nullptr;
+}
+
 void CircuitTristate::toDot(std::basic_ostream<char>& out, int indent) {
     const string thisCirc = string("tri_") + to_string(id());
 

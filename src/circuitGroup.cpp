@@ -149,6 +149,26 @@ std::vector<MatchResult> CircuitGroup::find(CircuitGroup* needle) {
     return matchSubcircuit(needle, this);
 }
 
+size_t CircuitGroup::inputCount() const {
+    return grpInputs.size();
+}
+
+size_t CircuitGroup::outputCount() const {
+    return grpOutputs.size();
+}
+
+WireId* CircuitGroup::nth_input(size_t circId) const {
+    if(circId >= inputCount())
+        return nullptr;
+    return grpInputs[circId]->formal();
+}
+
+WireId* CircuitGroup::nth_output(size_t circId) const {
+    if(circId >= outputCount())
+        return nullptr;
+    return grpOutputs[circId]->formal();
+}
+
 void CircuitGroup::toDot(std::basic_ostream<char>& out, int indent) {
     const string thisCirc = string("group_") + name_ + to_string(id());
 

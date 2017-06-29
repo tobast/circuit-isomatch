@@ -160,6 +160,18 @@ class CircuitTree {
         /** Get an iterator to the end of output wires */
         IoIter io_end() const { return out_end(); }
 
+        /// Get the number of inputs
+        virtual size_t inputCount() const = 0;
+
+        /// Get the number of outputs
+        virtual size_t outputCount() const = 0;
+
+        /// Get the nth input
+        virtual WireId* nth_input(size_t circId) const = 0;
+
+        /// Get the nth input
+        virtual WireId* nth_output(size_t circId) const = 0;
+
         /** Generates a Dot representation of the circuit, primarily intended
          * for debugging. */
         virtual void toDot(std::basic_ostream<char>& out, int indent=0) = 0;

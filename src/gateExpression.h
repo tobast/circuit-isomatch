@@ -6,7 +6,6 @@
 
 #include "signatureConstants.h"
 #include <string>
-#include "debug.h"
 
 namespace expr {
 
@@ -79,12 +78,8 @@ struct ExpressionBase {
     /// Call this instead of `delete`
     void deleteSelf() {
         refcount--;
-        if(refcount == 0) {
-            FIND_DEBUG("### Actual delete\n");
+        if(refcount == 0)
             delete this;
-        }
-        else
-            FIND_DEBUG("### Postponing delete\n");
     }
 
     private:

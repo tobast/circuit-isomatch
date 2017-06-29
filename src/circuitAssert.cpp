@@ -39,6 +39,24 @@ bool CircuitAssert::innerEqual(CircuitTree* othTree) {
         && gateExpr->equals(*oth->gateExpr);
 }
 
+size_t CircuitAssert::inputCount() const {
+    return gateInputs.size();
+}
+
+size_t CircuitAssert::outputCount() const {
+    return 0;
+}
+
+WireId* CircuitAssert::nth_input(size_t circId) const {
+    if(circId >= inputCount())
+        return nullptr;
+    return gateInputs[circId];
+}
+
+WireId* CircuitAssert::nth_output(size_t) const {
+    return nullptr;
+}
+
 void CircuitAssert::toDot(std::basic_ostream<char>& out, int indent) {
     const string thisCirc = string("assert_") + to_string(id());
 

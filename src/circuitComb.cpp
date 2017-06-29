@@ -72,6 +72,26 @@ bool CircuitComb::innerEqual(CircuitTree* othTree) {
     return true;
 }
 
+size_t CircuitComb::inputCount() const {
+    return gateInputs.size();
+}
+
+size_t CircuitComb::outputCount() const {
+    return gateOutputs.size();
+}
+
+WireId* CircuitComb::nth_input(size_t circId) const {
+    if(circId >= inputCount())
+        return nullptr;
+    return gateInputs[circId];
+}
+
+WireId* CircuitComb::nth_output(size_t circId) const {
+    if(circId >= outputCount())
+        return nullptr;
+    return gateOutputs[circId];
+}
+
 void CircuitComb::toDot(std::basic_ostream<char>& out, int indent) {
     const string thisCirc = string("delay_") + to_string(id());
 

@@ -55,6 +55,12 @@ class CircuitDelay : public CircuitTree {
         /** Gets the output wire. */
         const WireId* output() const { return wireOutput; }
 
+        // Documentation in CircuitTree*
+        size_t inputCount() const;
+        size_t outputCount() const;
+        WireId* nth_input(size_t circId) const;
+        WireId* nth_output(size_t circId) const;
+
         void toDot(std::basic_ostream<char>& out, int indent=0);
 
     protected:

@@ -74,6 +74,12 @@ class CircuitComb : public CircuitTree {
             return gateExprs;
         }
 
+        // Documentation in CircuitTree*
+        size_t inputCount() const;
+        size_t outputCount() const;
+        WireId* nth_input(size_t circId) const;
+        WireId* nth_output(size_t circId) const;
+
         void toDot(std::ostream& out, int indent=0);
 
     protected:

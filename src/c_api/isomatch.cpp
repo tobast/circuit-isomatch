@@ -95,6 +95,10 @@ const char* isom_strerror(isom_rc err_code) {
                 "context. This applies eg. when you try to access a wire.";
         case ISOM_RC_BADHEX:
             return "the supplied hex string contains non-[0-9a-fA-F] char(s).";
+        case ISOM_RC_OUT_OF_RANGE:
+            return "integer parameter out of range.";
+        case ISOM_RC_NOT_CONNECTED:
+            return "the requested pin is not connected to any wire.";
         case ISOM_RC_ERROR:
         default:
             return "generic error, please submit a bug report";
@@ -386,6 +390,64 @@ int free_expression(expr_handle expr) {
         return ISOM_RC_OK;
     } catch(const IsomError& e) {
         return handleError(e);
+    }
+}
+
+// === Accessors
+
+int isom_input_count(circuit_handle circuit) {
+    try {
+        CircuitTree* circ = circuitOfHandle(circuit);
+        return circ->inputCount();
+    } catch(const IsomError& e) {
+        handleError(e);
+        return -1;
+    }
+}
+
+int isom_output_count(circuit_handle circuit) {
+    try {
+        CircuitTree* circ = circuitOfHandle(circuit);
+        return circ->outputCount();
+    } catch(const IsomError& e) {
+        handleError(e);
+        return -1;
+    }
+}
+
+wire_handle isom_nth_input(circuit_handle circuit, size_t wireId) {
+    try {
+        CircuitTree* circ = circuitOfHandle(circuit);
+        if(wireId < circ->inputCount()) {
+            WireId* out = circ->nth_input(wireId);
+            if(out != nullptr)
+                return out->name().c_str();
+            lastError = ISOM_RC_NOT_CONNECTED;
+        }
+        else
+            lastError = ISOM_RC_OUT_OF_RANGE;
+        return nullptr;
+    } catch(const IsomError& e) {
+        handleError(e);
+        return nullptr;
+    }
+}
+
+wire_handle isom_nth_output(circuit_handle circuit, size_t wireId) {
+    try {
+        CircuitTree* circ = circuitOfHandle(circuit);
+        if(wireId < circ->outputCount()) {
+            WireId* out = circ->nth_output(wireId);
+            if(out != nullptr)
+                return out->name().c_str();
+            lastError = ISOM_RC_NOT_CONNECTED;
+        }
+        else
+            lastError = ISOM_RC_OUT_OF_RANGE;
+        return nullptr;
+    } catch(const IsomError& e) {
+        handleError(e);
+        return nullptr;
     }
 }
 

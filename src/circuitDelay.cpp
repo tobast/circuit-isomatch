@@ -31,6 +31,26 @@ bool CircuitDelay::innerEqual(CircuitTree*) {
     return true; // No inner data
 }
 
+size_t CircuitDelay::inputCount() const {
+    return 1;
+}
+
+size_t CircuitDelay::outputCount() const {
+    return 1;
+}
+
+WireId* CircuitDelay::nth_input(size_t circId) const {
+    if(circId >= inputCount())
+        return nullptr;
+    return wireInput;
+}
+
+WireId* CircuitDelay::nth_output(size_t circId) const {
+    if(circId >= outputCount())
+        return nullptr;
+    return wireOutput;
+}
+
 void CircuitDelay::toDot(std::basic_ostream<char>& out, int indent) {
     const string thisCirc = string("delay_") + to_string(id());
 
