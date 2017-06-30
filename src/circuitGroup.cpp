@@ -165,10 +165,7 @@ WireId* CircuitGroup::nth_output(size_t circId) const {
 }
 
 void CircuitGroup::unplug() {
-    alter();
-
-    if(ancestor_ != nullptr)
-        ancestor_->disconnectChild(this);
+    unplug_common();
 
     for(const auto& inp: grpInputs) {
         if(inp->formal() != nullptr)

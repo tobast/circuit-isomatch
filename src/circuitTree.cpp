@@ -36,10 +36,8 @@ bool CircuitTree::equals(CircuitTree* oth) {
 }
 
 void CircuitTree::unplug() {
-    alter();
+    unplug_common();
 
-    if(ancestor_ != nullptr)
-        ancestor_->disconnectChild(this);
     for(auto conn = io_begin(); conn != io_end(); ++conn) {
         (*conn)->disconnect(this);
     }
@@ -82,6 +80,13 @@ sign_t CircuitTree::computeSignature(int level) {
     }
 
     return inner + ioSig + inpSig - outSig;
+}
+
+void CircuitTree::unplug_common() {
+    alter();
+    if(ancestor_ != nullptr)
+        ancestor_->disconnectChild(this);
+    ancestor_ = nullptr;
 }
 
 void CircuitTree::alter(bool uprec) {

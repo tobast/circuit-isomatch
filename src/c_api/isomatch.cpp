@@ -111,6 +111,18 @@ static std::set<CircuitTree*>::iterator freeCircuitPtr(CircuitTree* circuit) {
     return freeCircuitPtr(circIter);
 }
 
+/** Same as `freeCircuitPtr`, but `delete`s the pointer without deleting the
+ * root entry if there is no such entry (instead of failing with
+ * `ISOM_RC_BAD_FREE`). */
+static void freeCircuitPtr_nofail(CircuitTree* circ) {
+    CircuitTree* root = componentRootOf(circ);
+    auto rootIter = markSweepState.roots.find(root);
+    if(rootIter != markSweepState.roots.end())
+        freeCircuitPtr(rootIter);
+    else
+        delete circ;
+}
+
 /**********************/
 /* API implementation */
 /**********************/
@@ -159,8 +171,9 @@ int free_circuit(circuit_handle circuit) {
 
 int isom_unplug_circuit(circuit_handle circuit) {
     try {
-        circuitOfHandle(circuit)->unplug();
-//        free_circuit(circuit);
+        CircuitTree* circ = circuitOfHandle(circuit);
+        circuitOfHandle(circ)->unplug();
+        freeCircuitPtr_nofail(circuitOfHandle(circuit));
         return ISOM_RC_OK;
     } catch(const IsomError& e) {
         return handleError(e);

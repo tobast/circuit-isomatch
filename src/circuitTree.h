@@ -187,6 +187,9 @@ class CircuitTree {
          */
         virtual bool innerEqual(CircuitTree* othTree) = 0;
 
+        /// Common steps for every overridden implementation of `unplug`
+        void unplug_common();
+
         // == Memoization bookkeeping
         typedef size_t memo_ts_t;
 

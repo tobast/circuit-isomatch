@@ -130,7 +130,7 @@ enum isom_expr_unop_cst {
 /*********************/
 
 /** Free the given previously created circuit's component (that is, including
- * its descendants as well).
+ * its ancestors and descendants).
  * @return 0 on success, > 0 on failure
  */
 int free_circuit(circuit_handle circuit);
@@ -310,11 +310,9 @@ void free_match_results(match_results* res);
 /* Mark and sweep                                                            */
 /*****************************************************************************/
 
-/** This mark and sweep algorithm works with whole subtrees only. This means
- * that if you mark a circuit, every descendant of this circuit will be marked
- * as well. */
-
-// FIXME documentation and algorithm
+/** This mark and sweep algorithm works on whole components only. This means
+ * that if you mark a circuit, every descendant and ancestor of this circuit
+ * will be marked as well. */
 
 /** Clears all the mark and sweep's marks. This is automatically done by
  * `isom_sweep` after a pass, but can also be done manually. */
