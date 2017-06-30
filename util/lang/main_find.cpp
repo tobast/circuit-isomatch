@@ -12,8 +12,6 @@ int main(int argc, char** argv) {
 
     CircuitGroup* haystack = parse(argv[1]);
     CircuitGroup* needle = parse(argv[2]);
-    haystack->freeze();
-    needle->freeze();
 
     vector<MatchResult> matches = haystack->find(needle);
 

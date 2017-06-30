@@ -5,7 +5,6 @@ using namespace std;
 
 int main(int, char** argv) {
     CircuitGroup* circuit = parse(argv[1]);
-    circuit->freeze();
 
     cout << circuit->sign() << endl;
 

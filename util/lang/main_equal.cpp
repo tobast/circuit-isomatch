@@ -11,8 +11,6 @@ int main(int argc, char** argv) {
         circuit2 = parse(argv[2]);
     else
         circuit2 = scrambleCircuit(circuit1);
-    circuit1->freeze();
-    circuit2->freeze();
 
     cout << circuit1->equals(circuit2)
          << circuit2->equals(circuit1)

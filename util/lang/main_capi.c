@@ -38,7 +38,15 @@ int main() {
     build_tristate(g_root, "p2", "mux1out", "p1");
     build_tristate(g_root, "p3", "mux1out", "np1");
 
-    freeze_circuit(g_root);
+    printf("%lX\t", sign(g_root));
+    fflush(stdout); // Sync with stderr (which is unbuffered)
+
+    circuit_handle c_mux2_not = build_comb(g_root);
+    build_comb_add_input(c_mux2_not, "p1");
+    build_comb_add_output(c_mux2_not, "np1_", expr_not0);
+    build_tristate(g_root, "p2", "mux1out_", "p1_");
+    build_tristate(g_root, "p3", "mux1out_", "np1_");
+
     printf("%lX\n", sign(g_root));
 
     circuit_handle g_needle = build_group("needle_mux");
@@ -52,8 +60,6 @@ int main() {
             build_expr_unop(UNot, build_expr_var(0)));
     build_tristate(g_needle, "a", "out", "sel");
     build_tristate(g_needle, "b", "out", "nsel");
-
-    freeze_circuit(g_needle);
 
     match_results* res = subcircuit_find(g_needle, g_root);
     match_results* cRes = res;
