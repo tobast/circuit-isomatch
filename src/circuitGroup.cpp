@@ -4,6 +4,7 @@
 #include "groupEquality.h"
 #include <cstdint>
 #include <unordered_map>
+#include <algorithm>
 
 #include "debug.h"
 
@@ -163,6 +164,23 @@ WireId* CircuitGroup::nth_output(size_t circId) const {
     return grpOutputs[circId]->formal();
 }
 
+void CircuitGroup::unplug() {
+    alter();
+
+    if(ancestor_ != nullptr)
+        ancestor_->disconnectChild(this);
+
+    for(const auto& inp: grpInputs) {
+        if(inp->formal() != nullptr)
+            inp->formal()->disconnect(inp);
+    }
+
+    for(const auto& out: grpOutputs) {
+        if(out->formal() != nullptr)
+            out->formal()->disconnect(out);
+    }
+}
+
 void CircuitGroup::toDot(std::basic_ostream<char>& out, int indent) {
     const string thisCirc = string("group_") + name_ + to_string(id());
 
@@ -293,4 +311,12 @@ void CircuitGroup::alteredChild() {
     CircuitTree::alter();
     for(auto& child: grpChildren)
         child->alter(false);
+}
+
+void CircuitGroup::disconnectChild(CircuitTree* toRemove) {
+    auto iter = std::find(grpChildren.begin(), grpChildren.end(), toRemove);
+    if(iter == grpChildren.end()) {
+        throw NoSuchChild();
+    }
+    grpChildren.erase(iter);
 }

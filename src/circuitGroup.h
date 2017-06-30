@@ -190,6 +190,8 @@ class CircuitGroup : public CircuitTree {
         WireId* nth_input(size_t circId) const;
         WireId* nth_output(size_t circId) const;
 
+        virtual void unplug();
+
         void toDot(std::basic_ostream<char>& out, int indent=0);
 
     protected:
@@ -200,7 +202,14 @@ class CircuitGroup : public CircuitTree {
         void computeIoSigs();
 
     private:
+        /// Thrown by `disconnectChild`
+        class NoSuchChild: public std::exception {};
+
         void setAncestor(CircuitTree* tree) const;
+
+        /** Removes the given circuit from this group's children. Trusts the
+         * caller with calling `alter`. */
+        void disconnectChild(CircuitTree* toRemove);
 
         std::string name_;
 

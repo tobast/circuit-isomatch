@@ -44,8 +44,14 @@ int main() {
     circuit_handle c_mux2_not = build_comb(g_root);
     build_comb_add_input(c_mux2_not, "p1");
     build_comb_add_output(c_mux2_not, "np1_", expr_not0);
-    build_tristate(g_root, "p2", "mux1out_", "p1_");
-    build_tristate(g_root, "p3", "mux1out_", "np1_");
+    circuit_handle alt_tri_1 = build_tristate(g_root, "p2", "mux1out_", "p1_");
+    circuit_handle alt_tri_2 =build_tristate(g_root, "p3", "mux1out_", "np1_");
+
+    printf("%lX\t", sign(g_root));
+
+    isom_unplug_circuit(c_mux2_not);
+    isom_unplug_circuit(alt_tri_1);
+    isom_unplug_circuit(alt_tri_2);
 
     printf("%lX\n", sign(g_root));
 

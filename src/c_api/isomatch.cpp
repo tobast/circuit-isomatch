@@ -157,6 +157,16 @@ int free_circuit(circuit_handle circuit) {
     }
 }
 
+int isom_unplug_circuit(circuit_handle circuit) {
+    try {
+        circuitOfHandle(circuit)->unplug();
+//        free_circuit(circuit);
+        return ISOM_RC_OK;
+    } catch(const IsomError& e) {
+        return handleError(e);
+    }
+}
+
 // === Assert
 
 circuit_handle build_assert(circuit_handle parent,

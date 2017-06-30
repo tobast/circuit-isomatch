@@ -151,6 +151,14 @@ class CircuitTree {
         /// Get the nth input
         virtual WireId* nth_output(size_t circId) const = 0;
 
+        /// Unplug the circuit from its ancestor
+        /** Unplug the circuit from its ancestor, that is, disconnects every
+         * wire. You **should** delete this circuit right after it has been
+         * unplugged, as its internal state is not cleaned up and will most
+         * probably break up in mean and inventive ways if you try to reuse it
+         */
+        virtual void unplug();
+
         /** Generates a Dot representation of the circuit, primarily intended
          * for debugging. */
         virtual void toDot(std::basic_ostream<char>& out, int indent=0) = 0;

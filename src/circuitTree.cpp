@@ -35,6 +35,16 @@ bool CircuitTree::equals(CircuitTree* oth) {
     return innerEqual(oth);
 }
 
+void CircuitTree::unplug() {
+    alter();
+
+    if(ancestor_ != nullptr)
+        ancestor_->disconnectChild(this);
+    for(auto conn = io_begin(); conn != io_end(); ++conn) {
+        (*conn)->disconnect(this);
+    }
+}
+
 sign_t CircuitTree::computeSignature(int level) {
     // Depends only on the gate's type and contents.
     sign_t inner = innerSignature();

@@ -4,6 +4,7 @@
 
 #include <unordered_set>
 #include <sstream>
+#include <algorithm>
 using namespace std;
 
 
@@ -88,6 +89,23 @@ void WireId::connect(const PinConnection& pin) {
 
 void WireId::connect(IOPin* pin, WireId* other) {
     connect(PinConnection(pin, other));
+}
+
+void WireId::disconnect(CircuitTree* circ) {
+    std::vector<CircuitTree*>& conns = inner()->connected;
+    auto iter = find(conns.begin(), conns.end(), circ);
+    if(iter == conns.end())
+        throw NoSuchConnection();
+    conns.erase(iter);
+}
+
+void WireId::disconnect(IOPin* pin) {
+    std::vector<PinConnection>& conns = inner()->connectedPins;
+    auto iter = find_if(conns.begin(), conns.end(),
+            [pin](const PinConnection& c) { return c.pin == pin; });
+    if(iter == conns.end())
+        throw NoSuchConnection();
+    conns.erase(iter);
 }
 
 const std::vector<CircuitTree*>& WireId::connectedCirc() {

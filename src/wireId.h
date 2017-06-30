@@ -10,6 +10,7 @@
 #include <string>
 #include <vector>
 #include <unordered_set>
+#include <exception>
 
 // Circular inclusion
 class CircuitTree;
@@ -71,6 +72,8 @@ class WireId {
                 WireId* parent;
         };
 
+        class NoSuchConnection : public std::exception {};
+
 		/**
 		 * Basic constructor
 		 *
@@ -110,6 +113,12 @@ class WireId {
         /** Connect a pin to this wire, creating a `PinConnection` on the fly.
          */
         void connect(IOPin* pin, WireId* other);
+
+        /// Disconnect the given `CircuitTree`
+        void disconnect(CircuitTree* circ);
+
+        /// Disconnect the given `IOPin`
+        void disconnect(IOPin* pin);
 
         /** Get the list of circuits connected to that wire. Fast. */
         const std::vector<CircuitTree*>& connectedCirc();
