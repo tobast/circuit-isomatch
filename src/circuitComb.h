@@ -52,14 +52,11 @@ class CircuitComb : public CircuitTree {
 
         CircType circType() const { return CIRC_COMB; }
 
-        /** Adds `wire` as the next input for this gate.
-         * Requires the gate to be unfrozen.
-         */
+        /// Adds `wire` as the next input for this gate.
         void addInput(WireId* wire);
 
         /** Adds `expr` as the expression for the next output wire, `out`. The
          * expression `expr` will be `delete`d by this object's destructor.
-         * Requires the gate to be unfrozen.
          */
         void addOutput(ExpressionBase* expr, WireId* wire);
 

@@ -29,11 +29,13 @@ CircuitComb::~CircuitComb() {
 }
 
 void CircuitComb::addInput(WireId* input) {
+    alter();
     gateInputs.push_back(input);
     input->connect(this);
 }
 
 void CircuitComb::addOutput(ExpressionBase* expr, WireId* wire) {
+    alter();
     gateOutputs.push_back(wire);
     wire->connect(this);
     gateExprs.push_back(expr);

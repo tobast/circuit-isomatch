@@ -1,5 +1,6 @@
 #include "circuitTree.h"
 #include "circuitGroup.h"
+#include "debug.h"
 #include <cassert>
 
 using namespace std;
@@ -7,7 +8,8 @@ using namespace std;
 size_t CircuitTree::nextCircuitId = 0;
 
 CircuitTree::CircuitTree() :
-        frozen(false), ancestor_(NULL), circuitId(nextCircuitId)
+        curHistoryTime(1), lastAlterationTime(1), // 1: nothing memoized yet
+        ancestor_(NULL), circuitId(nextCircuitId)
 {
     nextCircuitId++;
 }
@@ -16,19 +18,18 @@ CircuitTree::~CircuitTree()
 {}
 
 sign_t CircuitTree::sign(int level) {
-    failIfNotFrozen();
-    if(level < (int)memoSig.size() && memoSig[level] != 0)
-        return memoSig[level];
+    if(level < (int)memoSig.size()
+            && memoSig[level].timestamp >= lastAlterationTime)
+        return memoSig[level].sig;
 
     sign_t signature = computeSignature(level);
     while((int)memoSig.size() <= level) // Create [level] cell
-        memoSig.push_back(0);
-    memoSig[level] = signature;
+        memoSig.push_back(MemoSign(0, 0)); // 0 is always invalid
+    memoSig[level] = MemoSign(curHistoryTime, signature);
     return signature;
 }
 
 bool CircuitTree::equals(CircuitTree* oth) {
-    failIfNotFrozen();
     if(circType() != oth->circType())
         return false;
     return innerEqual(oth);
@@ -73,13 +74,9 @@ sign_t CircuitTree::computeSignature(int level) {
     return inner + ioSig + inpSig - outSig;
 }
 
-void CircuitTree::failIfFrozen() const {
-    if(frozen)
-        throw Frozen();
+void CircuitTree::alter(bool uprec) {
+    curHistoryTime++;
+    lastAlterationTime = curHistoryTime;
+    if(uprec && ancestor_ != nullptr)
+        ancestor_->alteredChild();
 }
-
-void CircuitTree::failIfNotFrozen() const {
-    if(!frozen)
-        throw NotFrozen();
-}
-

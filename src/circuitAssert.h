@@ -53,9 +53,7 @@ class CircuitAssert : public CircuitTree {
 
         CircType circType() const { return CIRC_ASSERT; }
 
-        /** Adds `wire` as the next input for this gate.
-         * Requires the gate to be unfrozen.
-         */
+        /// Adds `wire` as the next input for this gate.
         void addInput(WireId* wire);
 
         /** Gate's inputs */

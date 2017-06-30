@@ -148,15 +148,6 @@ const char* isom_strerror(isom_rc err_code) {
 
 // === Generic
 
-int freeze_circuit(circuit_handle circuit) {
-    try {
-        circuitOfHandle(circuit)->freeze();
-        return ISOM_RC_OK;
-    } catch(const IsomError& e) {
-        return handleError(e);
-    }
-}
-
 int free_circuit(circuit_handle circuit) {
     try {
         freeCircuitPtr(circuitOfHandle(circuit));

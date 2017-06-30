@@ -37,18 +37,6 @@ class CircuitTree {
         };
 
     public:
-        class Frozen : public std::exception {
-            const char* what() {
-                return "This circuit is frozen and cannot be altered.";
-            }
-        };
-
-        class NotFrozen : public std::exception {
-            const char* what() {
-                return "This circuit must be frozen before memoizing results.";
-            }
-        };
-
         enum CircType {
             CIRC_GROUP,
             CIRC_COMB,
@@ -106,7 +94,6 @@ class CircuitTree {
         /**
          * Computes the signature of the circuit. Memoized function, it will
          * only be costy on the first run.
-         * The circuit must be frozen.
          *
          * @param level Defines the signature level used. Lower means cheaper,
          * but also less precise.
@@ -119,14 +106,6 @@ class CircuitTree {
          * I/O, but only its internal structure.
          */
         bool equals(CircuitTree* oth);
-
-        /**
-         * Freezes the circuit forever: any function modifying its structure
-         * will fail with a Frozen exception.
-         * This is required before computing any memoized result dependning on
-         * the circuit's structure.
-         */
-        virtual void freeze() { frozen = true; }
 
         /**
          * O(1) comparaison using IDs
@@ -176,6 +155,15 @@ class CircuitTree {
          * for debugging. */
         virtual void toDot(std::basic_ostream<char>& out, int indent=0) = 0;
 
+        /** Notify the circuit that its internals have been modified, and its
+         * memoized results must be invalidated.
+         * **This is done automatically** on every altering method call. This
+         * can nevertheless be called if you want to invalidate memoization.
+         *
+         * @param uprec whether the ancestors' cache should be also invalidated
+         */
+        void alter(bool uprec = true);
+
     protected:
         /** Computes the actual signature of the circuit when it was not
          * previously memoized.
@@ -191,20 +179,21 @@ class CircuitTree {
          */
         virtual bool innerEqual(CircuitTree* othTree) = 0;
 
-        /**
-         * Checks whether the circuit is frozen, and fails with `Frozen` if it
-         * is.
-         */
-        void failIfFrozen() const;
+        // == Memoization bookkeeping
+        typedef size_t memo_ts_t;
 
-        /**
-         * Checks whether the circuit is frozen, and fails with `NotFrozen` if
-         * it is not.
-         */
-        void failIfNotFrozen() const;
+        /// Current history "timestamp" for this circuit, used for memoization
+        memo_ts_t curHistoryTime;
 
-        bool frozen;
-        std::vector<sign_t> memoSig;
+        memo_ts_t lastAlterationTime;
+
+        struct MemoSign {
+            MemoSign(memo_ts_t t, sign_t sig) : timestamp(t), sig(sig) {}
+            memo_ts_t timestamp;
+            sign_t sig;
+        };
+
+        std::vector<MemoSign> memoSig;
 
         /** Group this circuit belongs to. This is automatically set. */
         CircuitGroup* ancestor_;
@@ -213,6 +202,6 @@ class CircuitTree {
         static size_t nextCircuitId;
         size_t circuitId;
 
-    friend CircuitGroup;
+    friend class CircuitGroup;
 };
 

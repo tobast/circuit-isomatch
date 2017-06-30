@@ -49,13 +49,13 @@ void CircuitGroup::InnerIoIter::innerIncr() {
 }
 
 CircuitGroup::CircuitGroup(const std::string& name) :
-    CircuitTree(), name_(name)
+    CircuitTree(), name_(name), ioSigsTimestamp(0)
 {
     wireManager_ = new WireManager();
 }
 
 CircuitGroup::CircuitGroup(const std::string& name, WireManager* manager) :
-    CircuitTree(), name_(name), wireManager_(manager)
+    CircuitTree(), name_(name), wireManager_(manager), ioSigsTimestamp(0)
 {}
 
 CircuitGroup::~CircuitGroup() {
@@ -68,16 +68,8 @@ CircuitGroup::~CircuitGroup() {
     delete wireManager_;
 }
 
-void CircuitGroup::freeze() {
-    for(auto child: grpChildren)
-        child->freeze();
-    CircuitTree::freeze();
-
-    computeIoSigs();
-}
-
 void CircuitGroup::addChild(CircuitTree* child) {
-    failIfFrozen();
+    alter();
 
     child->ancestor_ = this; // CircuitGroup is friend of CircuitTree
     if(child->circType() == CIRC_GROUP) {
@@ -95,7 +87,8 @@ void CircuitGroup::addChild(CircuitTree* child) {
 }
 
 void CircuitGroup::addInput(const IOPin& pin) {
-    failIfFrozen();
+    alter();
+
     IOPin* nPin = new IOPin(pin);
     if(nPin->_formal != nullptr)
         nPin->link();
@@ -107,7 +100,8 @@ void CircuitGroup::addInput(const std::string& formal, WireId* actual) {
 }
 
 void CircuitGroup::addOutput(const IOPin& pin) {
-    failIfFrozen();
+    alter();
+
     IOPin* nPin = new IOPin(pin);
     if(nPin->_formal != nullptr)
         nPin->link();
@@ -119,7 +113,7 @@ void CircuitGroup::addOutput(const std::string& formal, WireId* actual) {
 }
 
 std::vector<CircuitTree*>& CircuitGroup::getChildren() {
-    failIfFrozen();
+    alter();
     return grpChildren;
 }
 const std::vector<CircuitTree*>& CircuitGroup::getChildren() const {
@@ -130,7 +124,7 @@ const std::vector<CircuitTree*>& CircuitGroup::getChildrenCst() const {
 }
 
 std::vector<IOPin*>& CircuitGroup::getInputs() {
-    failIfFrozen();
+    alter();
     return grpInputs;
 }
 const std::vector<IOPin*>& CircuitGroup::getInputs() const {
@@ -138,7 +132,7 @@ const std::vector<IOPin*>& CircuitGroup::getInputs() const {
 }
 
 std::vector<IOPin*>& CircuitGroup::getOutputs() {
-    failIfFrozen();
+    alter();
     return grpOutputs;
 }
 const std::vector<IOPin*>& CircuitGroup::getOutputs() const {
@@ -225,9 +219,10 @@ void CircuitGroup::toDot(std::basic_ostream<char>& out, int indent) {
         << "}\n";
 }
 
-sign_t CircuitGroup::ioSigOf(WireId* wire) const {
-    failIfNotFrozen();
+sign_t CircuitGroup::ioSigOf(WireId* wire) {
     try {
+        if(ioSigsTimestamp < lastAlterationTime)
+            computeIoSigs();
         return ioSigs_.at(wire);
     }
     catch(const std::out_of_range& e) {
@@ -285,9 +280,17 @@ void CircuitGroup::computeIoSigs() {
         wireSet.insert(outId);
     }
 
+    ioSigs_.clear();
+    ioSigsTimestamp = curHistoryTime;
     for(auto& entry : inpPinsForWire)
         ioSigs_[entry.first] = ioSigOfSet(entry.second);
     for(auto& entry : outPinsForWire)
         ioSigs_[entry.first] += (ioSigOfSet(entry.second) << 32);
     // FIXME ough to mix up a bit the two parts.
+}
+
+void CircuitGroup::alteredChild() {
+    CircuitTree::alter();
+    for(auto& child: grpChildren)
+        child->alter(false);
 }

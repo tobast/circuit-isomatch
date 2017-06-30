@@ -129,11 +129,6 @@ enum isom_expr_unop_cst {
 /* Generic functions */
 /*********************/
 
-/** Freeze a circuit, allowing to compute signatures and matchings
- * @return 0 on success, > 0 on failure
- */
-int freeze_circuit(circuit_handle circuit);
-
 /** Free the given previously created circuit's component (that is, including
  * its ancestors and descendants).
  * @return 0 on success, > 0 on failure

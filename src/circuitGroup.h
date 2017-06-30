@@ -113,46 +113,34 @@ class CircuitGroup : public CircuitTree {
         CircType circType() const { return CIRC_GROUP; }
 
         /**
-         * Freezes the circuit as `CircuitTree::freeze` does, but also freezes
-         * all the children of this group.
-         */
-        void freeze();
-
-        /**
          * Adds `child` as a child of this group. All external pins of `child`
          * are disconnected, and reconnected to this group's corresponding
          * wires during the process.
-         * Requires the group to be unfrozen.
          */
         void addChild(CircuitTree* child);
 
         /**
          * Adds `pin` as input pin of this group.
-         * Requires the group to be unfrozen.
          */
         void addInput(const IOPin& pin);
 
         /**
          * Adds an input pin to this group.
-         * Requires the group to be unfrozen.
          */
         void addInput(const std::string& formal, WireId* actual);
 
         /**
          * Adds `pin` as output pin of this group.
-         * Requires the group to be unfrozen.
          */
         void addOutput(const IOPin& pin);
 
         /**
          * Adds an output pin to this group.
-         * Requires the group to be unfrozen.
          */
         void addOutput(const std::string& formal, WireId* actual);
 
         /**
          * Group's subcircuits, mutable.
-         * Requires the group to be unfrozen.
          */
         std::vector<CircuitTree*>& getChildren();
         /**
@@ -164,14 +152,12 @@ class CircuitGroup : public CircuitTree {
         const std::vector<CircuitTree*>& getChildrenCst() const;
 
         /** Group's inputs, mutable.
-         * Requires the group to be unfrozen.
          */
         std::vector<IOPin*>& getInputs();
         /** Group's inputs */
         const std::vector<IOPin*>& getInputs() const;
 
         /** Group's outputs, mutable.
-         * Requires the group to be unfrozen.
          */
         std::vector<IOPin*>& getOutputs();
         /** Group's outputs */
@@ -180,8 +166,8 @@ class CircuitGroup : public CircuitTree {
         /** Returns the I/O signature of a belonging to this group, that is, a
          * signature encompassing how this particular wire is connected to the
          * I/O pins of this group.
-         * Requires the group to be frozen. */
-        sign_t ioSigOf(WireId* id) const;
+         */
+        sign_t ioSigOf(WireId* id);
 
         /** Group's `WireManager`. */
         WireManager* wireManager() { return wireManager_; }
@@ -207,6 +193,8 @@ class CircuitGroup : public CircuitTree {
         void toDot(std::basic_ostream<char>& out, int indent=0);
 
     protected:
+        void alteredChild();
+
         virtual sign_t innerSignature() const;
         virtual bool innerEqual(CircuitTree* othTree);
         void computeIoSigs();
@@ -220,6 +208,10 @@ class CircuitGroup : public CircuitTree {
 
         std::vector<CircuitTree*> grpChildren;
         std::vector<IOPin*> grpInputs, grpOutputs;
+
+        memo_ts_t ioSigsTimestamp;
         std::unordered_map<WireId*, sign_t> ioSigs_;
+
+    friend class CircuitTree;
 };
 

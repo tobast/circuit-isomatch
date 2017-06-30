@@ -23,7 +23,7 @@ CircuitAssert::~CircuitAssert() {
 }
 
 void CircuitAssert::addInput(WireId* wire) {
-    failIfFrozen();
+    alter();
     gateInputs.push_back(wire);
 }
 
