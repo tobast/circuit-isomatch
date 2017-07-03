@@ -66,12 +66,14 @@ test: sig.bin dot.bin find.bin capi.cbin equal.bin
 	[ "$$(./find.bin circ/processor.circ circ/mux.circ | head -n 1)" = \
 		"73 matches" ]
 	./capi.cbin > /dev/null
+	./replace.bin circ/simpledeep{,_repl}.circ > /dev/null
 	[ "$$(./capi.cbin 2>/dev/null | tail -n 1)" = "2 MUX" ]
 	[ "$$(./equal.bin circ/processor.circ)" = "11" ]
 	valgrind -q ./dot.bin circ/processor.circ > /dev/null
 	valgrind -q ./sig.bin circ/processor.circ > /dev/null
 	valgrind -q ./capi.cbin > /dev/null
 	valgrind -q ./equal.bin circ/processor.circ > /dev/null
+	valgrind -q ./replace.bin circ/simpledeep{,_repl}.circ > /dev/null
 	@echo -e "\e[92m>> All tests passed! :)\e[0m"
 
 speed: equal.bin
