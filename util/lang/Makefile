@@ -59,7 +59,7 @@ aux.o: aux.cpp parser.tab.hpp
 clean:
 	rm -rf *.{c,}bin *.o *.yy.{cpp,c} *.tab.{cpp,c,h,hpp}
 
-test: sig.bin dot.bin find.bin capi.cbin equal.bin
+test: sig.bin dot.bin find.bin capi.cbin equal.bin replace.bin
 	./run_sigtests.py
 	./dot.bin circ/processor.circ > /dev/null
 	./sig.bin circ/processor.circ > /dev/null
