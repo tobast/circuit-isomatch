@@ -247,7 +247,14 @@ void mapVertices(CircuitGroup* group, VerticeMapping& mapping) {
         mapping.vertices.push_back(Vertice(wire));
     }
 
-    for(const auto& child: group->getChildrenCst()) {
+    vector<CircuitTree*> children(group->getChildrenCst());
+    sort(children.begin(), children.end(),
+            [](CircuitTree*& e1, CircuitTree*& e2) {
+                return e1->inputCount() + e1->outputCount()
+                    > e2->inputCount() + e2->outputCount();
+            });
+
+    for(const auto& child: children) {
         mapping.circId[child] = mapping.vertices.size();
         mapping.vertices.push_back(Vertice(child));
     }
